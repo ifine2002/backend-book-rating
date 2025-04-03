@@ -27,4 +27,6 @@ public interface PermissionService {
   boolean isSameName(long permissionId, PermissionRequestDTO p);
 
   void changeIsActive(long id);
+
+  ResultPaginationDTO getActivePermissions(Specification<Permission> spec, Pageable pageable);
 }

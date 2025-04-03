@@ -12,6 +12,7 @@ import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.model.Permission;
 import vn.ifine.repository.PermissionRepository;
 import vn.ifine.service.PermissionService;
+import vn.ifine.specification.PermissionSpecification;
 
 @Service
 @Slf4j
@@ -121,5 +122,23 @@ public class PermissionServiceImpl implements PermissionService {
 
       log.info("Permission has change isActive successfully, permissionId={}", permissionDB.getId());
     }
+  }
+
+  @Override
+  public ResultPaginationDTO getActivePermissions(Specification<Permission> spec,
+      Pageable pageable) {
+    // Kết hợp điều kiện isActive với các điều kiện khác
+    Specification<Permission> activeSpec = PermissionSpecification.withFilter(spec);
+
+    Page<Permission> pagePermission = this.permissionRepository.findAll(activeSpec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+    rs.setTotalPages(pagePermission.getTotalPages());
+    rs.setTotalElements(pagePermission.getTotalElements());
+    rs.setResult(pagePermission.getContent());
+
+    return rs;
   }
 }

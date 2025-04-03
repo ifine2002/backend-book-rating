@@ -131,4 +131,13 @@ public class PermissionController {
     return ResponseEntity.ok()
         .body(ApiResponse.success("Change is active a permission success", null));
   }
+
+  @GetMapping("/active")
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getActivePermissions(
+      @Filter Specification<Permission> spec,
+      Pageable pageable) {
+    return ResponseEntity.ok().body(
+        ApiResponse.success("Fetch all avtive permission success",
+            this.permissionService.getActivePermissions(spec, pageable)));
+  }
 }
