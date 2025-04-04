@@ -19,6 +19,4 @@ public class PermissionRequestDTO {
 
   @NotBlank(message = "module must be not blank")
   private String module;
-
-  private List<Role> roles;
 }

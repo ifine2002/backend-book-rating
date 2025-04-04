@@ -11,7 +11,7 @@ import vn.ifine.service.UserService;
 @RestController
 @RequestMapping("/user")
 @Validated
-@Slf4j
+@Slf4j(topic = "USER-CONTROLLER")
 @Tag(name = "User Controller")
 @RequiredArgsConstructor
 public class UserController {

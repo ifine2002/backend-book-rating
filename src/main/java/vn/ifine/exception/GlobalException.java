@@ -39,18 +39,18 @@ public class GlobalException {
   }
 
   @ExceptionHandler(value = { ResourceNotFoundException.class})
-  @ResponseStatus(NOT_FOUND)
+  @ResponseStatus(BAD_REQUEST)
   public ResponseEntity<ErrorResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
     log.error("Exception caught: ", ex);  // Log toàn bộ stack trace
     ErrorResponse<Object> errorResponse = ErrorResponse.builder()
         .timestamp(new Date())
-        .status(NOT_FOUND.value())
-        .error(NOT_FOUND.getReasonPhrase())
+        .status(BAD_REQUEST.value())
+        .error(BAD_REQUEST.getReasonPhrase())
         .message(ex.getMessage())
         .path(request.getDescription(false).replace("uri=", ""))
         .build();
 
-    return ResponseEntity.status(NOT_FOUND).body(errorResponse);
+    return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
   }
 
   @ExceptionHandler(value = {ResourceAlreadyExistsException.class})

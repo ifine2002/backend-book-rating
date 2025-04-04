@@ -14,7 +14,7 @@ public interface PermissionService {
 
   Permission create(PermissionRequestDTO p);
 
-  Permission getPermissionById(long id);
+  Permission getById(long id);
 
   Permission update(long permissionId, PermissionRequestDTO permission);
 

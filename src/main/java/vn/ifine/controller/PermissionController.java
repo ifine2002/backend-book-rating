@@ -24,13 +24,12 @@ import vn.ifine.dto.request.PermissionRequestDTO;
 import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.exception.ResourceAlreadyExistsException;
-import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Permission;
 import vn.ifine.service.PermissionService;
 
 @RestController
 @RequestMapping("/permission")
-@Slf4j
+@Slf4j(topic = "PERMISSION-CONTROLLER")
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Permission Controller")
@@ -43,9 +42,10 @@ public class PermissionController {
       @Valid @RequestBody PermissionRequestDTO permission) {
     log.info("Request add permission, {} {}", permission.getName(), permission.getApiPath());
     // check exist permission
-    boolean isExist = this.permissionService.existsByModuleAndApiPathAndMethod(permission);
-    if (isExist) {
-      throw new ResourceAlreadyExistsException("Permission already exists");
+    if (this.permissionService.existsByModuleAndApiPathAndMethod(permission)) {
+      throw new ResourceAlreadyExistsException("Permission already exists with module="
+          + permission.getModule() + ", apiPath=" + permission.getApiPath() + ", method="
+          + permission.getMethod());
     }
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created("Create a permission success",
@@ -57,15 +57,14 @@ public class PermissionController {
       @Valid @RequestBody PermissionRequestDTO permission) {
     log.info("Request update permission, permissionId={}", id);
     // check exist by id
-    if (this.permissionService.getPermissionById(id) == null) {
-      throw new ResourceNotFoundException("Permission with id = " + id + " not exists");
-    }
-
+    Permission existingPermission = this.permissionService.getById(id);
     // check exist by module, apiPath and method
     if (this.permissionService.existsByModuleAndApiPathAndMethod(permission)) {
       // check name
       if (this.permissionService.isSameName(id, permission)) {
-        throw new ResourceAlreadyExistsException("Permission already exists");
+        throw new ResourceAlreadyExistsException("Permission already exists with module="
+            + permission.getModule() + ", apiPath=" + permission.getApiPath() + ", method="
+            + permission.getMethod() + ", name=" + permission.getName());
       }
     }
     return ResponseEntity.ok()
@@ -78,9 +77,8 @@ public class PermissionController {
   public ResponseEntity<ApiResponse<Void>> remove(@PathVariable("id") long id) {
     log.info("Request remove permission, permissionId={}", id);
     // check exist by id
-    if (this.permissionService.getPermissionById(id) == null) {
-      throw new ResourceNotFoundException("Permission with id = " + id + " not exists");
-    }
+    Permission existingPermission = this.permissionService.getById(id);
+
     this.permissionService.remove(id);
     return ResponseEntity.ok().body(ApiResponse.success("Remove a permission success", null));
   }
@@ -90,9 +88,8 @@ public class PermissionController {
   public ResponseEntity<ApiResponse<Permission>> deleteSoft(@PathVariable @Min(1) long id) {
     log.info("Request delete-soft permission, permissionId={}", id);
     // check exist by id
-    if (this.permissionService.getPermissionById(id) == null) {
-      throw new ResourceNotFoundException("Permission with id = " + id + " not exists");
-    }
+    Permission existingPermission = this.permissionService.getById(id);
+
     this.permissionService.deleteSoft(id);
     return ResponseEntity.ok()
         .body(ApiResponse.success("Delete-soft a permission success", null));
@@ -111,12 +108,11 @@ public class PermissionController {
   public ResponseEntity<ApiResponse<Permission>> getPermissionById(@PathVariable @Min(1) long id) {
     log.info("Request get permission, permissionId={}", id);
     // check exist by id
-    if (this.permissionService.getPermissionById(id) == null) {
-      throw new ResourceNotFoundException("Permission with id = " + id + " not exists");
-    }
+    Permission existingPermission = this.permissionService.getById(id);
+
     return ResponseEntity.ok()
         .body(ApiResponse.success("Fetch a permission success",
-            this.permissionService.getPermissionById(id)));
+            existingPermission));
   }
 
   // Change isActive
@@ -124,9 +120,8 @@ public class PermissionController {
   public ResponseEntity<ApiResponse<Permission>> changeIsActive(@PathVariable @Min(1) long id) {
     log.info("Request change isActive permission, permissionId={}", id);
     // check exist by id
-    if (this.permissionService.getPermissionById(id) == null) {
-      throw new ResourceNotFoundException("Permission with id = " + id + " not exists");
-    }
+    Permission existingPermission = this.permissionService.getById(id);
+
     this.permissionService.changeIsActive(id);
     return ResponseEntity.ok()
         .body(ApiResponse.success("Change is active a permission success", null));
@@ -137,7 +132,7 @@ public class PermissionController {
       @Filter Specification<Permission> spec,
       Pageable pageable) {
     return ResponseEntity.ok().body(
-        ApiResponse.success("Fetch all avtive permission success",
+        ApiResponse.success("Fetch all active permission success",
             this.permissionService.getActivePermissions(spec, pageable)));
   }
 }
