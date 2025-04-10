@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import vn.ifine.dto.request.RoleRequestDTO;
+import vn.ifine.dto.request.ReqRoleDTO;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Permission;
@@ -31,7 +31,7 @@ public class RoleServiceImpl implements RoleService {
   }
 
   @Override
-  public Role create(RoleRequestDTO role) {
+  public Role create(ReqRoleDTO role) {
     Role roleCurrent = Role.builder()
         .name(role.getName())
         .description(role.getDescription())
@@ -54,7 +54,7 @@ public class RoleServiceImpl implements RoleService {
   }
 
   @Override
-  public Role update(int id, RoleRequestDTO role) {
+  public Role update(int id, ReqRoleDTO role) {
     Role dbRole = this.getById(id);
     dbRole.setName(role.getName());
     dbRole.setDescription(role.getDescription());

@@ -1,20 +1,23 @@
 package vn.ifine.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import vn.ifine.util.GenderEnum;
 import vn.ifine.util.UserStatus;
 
@@ -25,7 +28,7 @@ import vn.ifine.util.UserStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User extends AbstractUserEntity<Long>{
+public class User extends AbstractModel<Long> {
   @Column(name = "full_name")
   private String fullName;
 
@@ -55,11 +58,21 @@ public class User extends AbstractUserEntity<Long>{
   private String refreshToken;
 
   @Enumerated(EnumType.STRING)
-//  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "status")
   private UserStatus status;
 
   @ManyToOne
   @JoinColumn(name = "role_id")
   private Role role;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  private List<Bookmark> bookmarks;
+
+  // Danh sách người mà user này theo dõi
+  @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  private List<Follow> following;
+
+  // Danh sách người đang theo dõi user này
+  @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+  private List<Follow> followers;
 }

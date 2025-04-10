@@ -1,7 +1,6 @@
 package vn.ifine.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -10,7 +9,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.ifine.dto.request.ReqCreateUser;
-import vn.ifine.dto.request.ReqRegisterDTO;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
@@ -21,7 +19,6 @@ import vn.ifine.model.User;
 import vn.ifine.repository.UserRepository;
 import vn.ifine.service.RoleService;
 import vn.ifine.service.UserService;
-import vn.ifine.specification.GenericSpecification;
 import vn.ifine.specification.UserSpecification;
 import vn.ifine.util.UserStatus;
 
@@ -143,6 +140,8 @@ public class UserServiceImpl implements UserService {
         .role(user.getRole())
         .createdAt(user.getCreatedAt())
         .updatedAt(user.getUpdatedAt())
+        .createBy(user.getCreatedBy())
+        .updatedBy(user.getUpdatedBy())
         .build();
     return resUser;
   }

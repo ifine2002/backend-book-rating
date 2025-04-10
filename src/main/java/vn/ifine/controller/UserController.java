@@ -26,7 +26,6 @@ import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
-import vn.ifine.model.Role;
 import vn.ifine.model.User;
 import vn.ifine.service.UserService;
 import vn.ifine.util.UserStatus;
@@ -73,7 +72,7 @@ public class UserController {
 
   // Remove
   @DeleteMapping("/{id}")
-  public ResponseEntity<ApiResponse<Void>> remove(@PathVariable("id") long id) {
+  public ResponseEntity<ApiResponse<Void>> remove(@PathVariable("id") @Min(1) long id) {
     log.info("Request remove user, id={}", id);
     // check exist by id
     User user = this.userService.getById(id);
@@ -107,7 +106,7 @@ public class UserController {
   }
 
   @GetMapping("/list")
-  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getPermissions(
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getAllUser(
       @Filter Specification<User> spec,
       Pageable pageable) {
     return ResponseEntity.ok().body(
@@ -116,7 +115,7 @@ public class UserController {
   }
 
   @GetMapping("/active")
-  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getActivePermissions(
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getActiveUser(
       @Filter Specification<User> spec,
       Pageable pageable) {
     return ResponseEntity.ok().body(

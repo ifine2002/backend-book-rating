@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.ifine.dto.request.PermissionRequestDTO;
+import vn.ifine.dto.request.ReqPermissionDTO;
 import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.exception.ResourceAlreadyExistsException;
@@ -39,7 +39,7 @@ public class PermissionController {
 
   @PostMapping("/")
   public ResponseEntity<ApiResponse<Permission>> create(
-      @Valid @RequestBody PermissionRequestDTO permission) {
+      @Valid @RequestBody ReqPermissionDTO permission) {
     log.info("Request add permission, {} {}", permission.getName(), permission.getApiPath());
     // check exist permission
     if (this.permissionService.existsByModuleAndApiPathAndMethod(permission)) {
@@ -54,7 +54,7 @@ public class PermissionController {
 
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse<Permission>> update(@PathVariable @Min(1) long id,
-      @Valid @RequestBody PermissionRequestDTO permission) {
+      @Valid @RequestBody ReqPermissionDTO permission) {
     log.info("Request update permission, permissionId={}", id);
     // check exist by id
     Permission existingPermission = this.permissionService.getById(id);

@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import vn.ifine.dto.request.PermissionRequestDTO;
+import vn.ifine.dto.request.ReqPermissionDTO;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Permission;
@@ -30,14 +30,14 @@ public class PermissionServiceImpl implements PermissionService {
   private final RoleRepository roleRepository;
 
   @Override
-  public boolean existsByModuleAndApiPathAndMethod(PermissionRequestDTO p) {
+  public boolean existsByModuleAndApiPathAndMethod(ReqPermissionDTO p) {
     return this.permissionRepository.existsByModuleAndApiPathAndMethod(p.getModule(),
         p.getApiPath(),
         p.getMethod());
   }
 
   @Override
-  public Permission create(PermissionRequestDTO p) {
+  public Permission create(ReqPermissionDTO p) {
     Permission permission = Permission.builder()
         .name(p.getName())
         .apiPath(p.getApiPath())
@@ -56,7 +56,7 @@ public class PermissionServiceImpl implements PermissionService {
   }
 
   @Override
-  public Permission update(long permissionId, PermissionRequestDTO permission) {
+  public Permission update(long permissionId, ReqPermissionDTO permission) {
     Permission permissionDB = this.getById(permissionId);
     permissionDB.setName(permission.getName());
     permissionDB.setApiPath(permission.getApiPath());
@@ -106,7 +106,7 @@ public class PermissionServiceImpl implements PermissionService {
   }
 
   @Override
-  public boolean isSameName(long permissionId, PermissionRequestDTO p) {
+  public boolean isSameName(long permissionId, ReqPermissionDTO p) {
     Permission permissionDB = this.getById(permissionId);
     if (permissionDB.getName().equals(p.getName())) {
       return true;
