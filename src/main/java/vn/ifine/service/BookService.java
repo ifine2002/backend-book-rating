@@ -5,7 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import vn.ifine.dto.request.ReqBookDTO;
+import vn.ifine.dto.request.ReviewRequestDto;
 import vn.ifine.dto.response.ResBook;
+import vn.ifine.dto.response.ResDetailBook;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.model.Book;
 
@@ -30,4 +32,14 @@ public interface BookService {
   List<ResBook> getAllBookOfUser(String email);
 
   ResBook convertToResBook(Book book);
+
+  ResDetailBook getBookDetail(long id);
+
+  void submitReview(long bookId, ReviewRequestDto request, String email);
+
+  void updateReview(Long commentId, Long ratingId, ReviewRequestDto request, String email);
+
+  void deleteReview(Long commentId, Long ratingId, String email);
+
+  void deleteComment(Long commentId, String email);
 }

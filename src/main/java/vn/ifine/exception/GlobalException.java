@@ -127,11 +127,10 @@ public class GlobalException {
         .message(ex.getMessage())
         .path(request.getDescription(false).replace("uri=", ""))
         .build();
-
     return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
   }
 
-  @ExceptionHandler(value = {HttpMessageNotReadableException.class})
+  @ExceptionHandler(value = {HttpMessageNotReadableException.class, IllegalArgumentException.class})
   @ResponseStatus(BAD_REQUEST)
   public ResponseEntity<ErrorResponse<Object>> handleEnumValidationException(HttpMessageNotReadableException ex, WebRequest request) {
     log.error("Exception caught: ", ex);  // Log toàn bộ stack trace

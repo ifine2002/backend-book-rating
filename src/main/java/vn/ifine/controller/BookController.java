@@ -4,6 +4,7 @@ import com.turkraft.springfilter.boot.Filter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -21,8 +22,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.ifine.dto.request.ReqBookDTO;
+import vn.ifine.dto.request.ReviewRequestDto;
 import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResBook;
+import vn.ifine.dto.response.ResDetailBook;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.model.Book;
 import vn.ifine.service.BookService;
@@ -97,5 +100,60 @@ public class BookController {
             this.bookService.getAllBookOfUser(email)));
   }
 
+  @PostMapping("/upload-post")
+  public ResponseEntity<ApiResponse<ResBook>> uploadPost(
+      @Valid @RequestBody ReqBookDTO reqBookDTO) {
+    log.info("Request upload book, {}", reqBookDTO.getName());
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.created("Create a book success",
+            this.bookService.uploadBook(reqBookDTO)));
+  }
 
+  @GetMapping("/detail-book/{id}")
+  public ResponseEntity<ApiResponse<ResDetailBook>> getDetailBook(@PathVariable @Min(1) long id) {
+    log.info("Request get book, id={}", id);
+    ResDetailBook detailBook = bookService.getBookDetail(id);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Fetch a book success",
+            detailBook));
+  }
+
+  @PostMapping("/review/{bookId}")
+  public ResponseEntity<ApiResponse<Void>> uploadPost(@PathVariable @Min(1) long bookId,
+      @RequestBody ReviewRequestDto request, Principal principal) {
+    log.info("Request comment , {}", request.getComment());
+    bookService.submitReview(bookId, request, principal.getName());
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.created("Create comment book success",
+            null));
+  }
+
+  @PutMapping("/update-review")
+  public ResponseEntity<ApiResponse<Void>> updateReview(
+      @RequestParam(required = false) @Min(1) Long commentId,
+      @RequestParam(required = false) @Min(1) Long ratingId,
+      @RequestBody ReviewRequestDto request, Principal principal) {
+    log.info("Request update review, commentId={}, ratingId={}", commentId, ratingId);
+    bookService.updateReview(commentId, ratingId, request, principal.getName());
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Update a review success",
+            null));
+  }
+
+  @DeleteMapping("/review")
+  public ResponseEntity<ApiResponse<Void>> deleteReview(
+      @RequestParam(required = false) @Min(1) Long commentId,
+      @RequestParam @Min(1) Long ratingId, Principal principal) {
+    log.info("Request remove review, commentId={}, ratingId={}", commentId, ratingId);
+    bookService.deleteReview(commentId, ratingId, principal.getName());
+    return ResponseEntity.ok().body(ApiResponse.success("Delete review book success", null));
+  }
+
+  @DeleteMapping("/comment/{commentId}")
+  public ResponseEntity<ApiResponse<Void>> deleteOnlyComment(
+      @PathVariable @Min(1) Long commentId, Principal principal) {
+    log.info("Request remove only comment, commentId={}", commentId);
+    bookService.deleteComment(commentId, principal.getName());
+    return ResponseEntity.ok().body(ApiResponse.success("Delete comment book success", null));
+  }
 }

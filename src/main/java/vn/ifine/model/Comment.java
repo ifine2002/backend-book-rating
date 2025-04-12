@@ -27,4 +27,6 @@ public class Comment extends AbstractEntity<Long>{
   @Column(name = "comment", columnDefinition = "TEXT", nullable = false)
   private String comment;
 
+  @Column(name = "is_rating_comment")
+  private boolean isRatingComment = false;
 }
