@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.ifine.dto.request.ReqBookDTO;
@@ -38,12 +39,12 @@ import vn.ifine.util.BookStatus;
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
 
-
   private final UserService userService;
   private final BookRepository bookRepository;
   private final CategoryRepository categoryRepository;
   private final RatingRepository ratingRepository;
   private final CommentRepository commentRepository;
+  private final SimpMessagingTemplate messagingTemplate;
 
   //for admin
   @Override
@@ -296,7 +297,17 @@ public class BookServiceImpl implements BookService {
       comment.setComment(request.getComment());
       comment.setRatingComment(hasRating);
 
-      commentRepository.save(comment);
+      comment = commentRepository.save(comment);
+
+      // 👉 Gửi WebSocket comment sau khi lưu
+      ResCommentDto commentDTO = new ResCommentDto();
+      commentDTO.setId(comment.getId());
+      commentDTO.setEmail(user.getEmail()); // hoặc user.getEmail()
+      commentDTO.setComment(comment.getComment());
+      commentDTO.setCreatedAt(comment.getCreatedAt());
+      commentDTO.setUpdatedAt(comment.getUpdatedAt());
+
+      messagingTemplate.convertAndSend("/topic/comments/" + bookId, commentDTO);
     }
   }
 

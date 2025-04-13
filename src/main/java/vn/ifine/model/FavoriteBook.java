@@ -12,13 +12,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "bookmarks")
+@Table(name = "favorite_books")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Bookmark extends AbstractEntity<Long> {
+public class FavoriteBook extends AbstractEntity<Long> {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)

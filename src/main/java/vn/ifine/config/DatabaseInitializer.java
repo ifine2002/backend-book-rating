@@ -1,4 +1,4 @@
-package vn.ifine.configuration;
+package vn.ifine.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;

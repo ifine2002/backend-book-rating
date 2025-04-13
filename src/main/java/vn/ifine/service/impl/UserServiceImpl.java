@@ -10,12 +10,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqUpdateUser;
+import vn.ifine.dto.response.ResFollowDTO;
+import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
+import vn.ifine.exception.CustomException;
 import vn.ifine.exception.ResourceAlreadyExistsException;
 import vn.ifine.exception.ResourceNotFoundException;
+import vn.ifine.model.Follow;
 import vn.ifine.model.Role;
 import vn.ifine.model.User;
+import vn.ifine.repository.FollowRepository;
 import vn.ifine.repository.UserRepository;
 import vn.ifine.service.RoleService;
 import vn.ifine.service.UserService;
@@ -30,6 +35,7 @@ public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final RoleService roleService;
+  private final FollowRepository followRepository;
 
   @Override
   public User getById(long id) {
@@ -112,10 +118,8 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public User getUserByEmail(String email) {
-    User user = userRepository.findByEmail(email);
-    if (user == null) {
-      throw new ResourceNotFoundException("Bad credentials");
-    }
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException("Bad credentials"));
     log.info("Get user by email successfully, id={}", user.getId());
     return user;
   }
@@ -199,5 +203,82 @@ public class UserServiceImpl implements UserService {
 
     rs.setResult(listUser);
     return rs;
+  }
+
+  @Override
+  public ResFollowDTO followUser(String email, Long followingId) {
+    log.info("Request follow user, emailFollower={}, followingId={}", email, followingId);
+    User follower = this.getUserByEmail(email);
+    if(follower.getId() == followingId){
+      throw  new CustomException("Can't follow myself");
+    }
+    User following = this.getById(followingId);
+    Follow follow = Follow.builder()
+        .follower(follower)
+        .following(following)
+        .build();
+    follow = followRepository.save(follow);
+
+    ResFollowDTO res = ResFollowDTO.builder()
+        .id(follow.getId())
+        .followerId(follow.getFollower().getId())
+        .followingId(follow.getFollowing().getId())
+        .createdAt(follow.getCreatedAt())
+        .createBy(follow.getCreatedBy())
+        .build();
+    return res;
+  }
+
+  // unfollow cho người đi follow (A follow B) -> A hủy follow B
+  @Override
+  public void unFollowForFollower(String email, Long followingId) {
+    log.info("Request unfollow form follower user, emailFollower={}, followingId={}", email, followingId);
+    User follower = this.getUserByEmail(email);
+    Follow follow = followRepository.findByFollowerIdAndFollowingId(follower.getId(), followingId)
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Not found follow with followerId=" + follower.getId() + " and followingId="
+                + followingId));
+    followRepository.delete(follow);
+  }
+
+  // unfollow cho người được follow (A follow B) -> B hủy follow của A
+  @Override
+  public void unFollowForFollowing(Long followerId, String email) {
+    log.info("Request unfollow from following user, followerId={}, emailFollowing={}", followerId, email);
+    User following = this.getUserByEmail(email);
+    Follow follow = followRepository.findByFollowerIdAndFollowingId(followerId, following.getId())
+        .orElseThrow(() -> new ResourceNotFoundException(
+            "Not found follow with followerId=" + followerId + " and followingId="
+                + following.getId()));
+    followRepository.delete(follow);
+  }
+  //List user đang follow bạn
+  @Override
+  public List<ResUserFollow> getListFollower(String email) {
+    User user = this.getUserByEmail(email);
+    List<Follow> listFollows = followRepository.findByFollowingId(user.getId());
+    List<User> follower = listFollows.stream().map(Follow::getFollower).toList();
+    List<ResUserFollow> listRes = follower.stream().map(this::convertToResUserFollow).toList();
+    return listRes;
+  }
+
+  //List user bạn đang follow
+  @Override
+  public List<ResUserFollow> getListFollowing(String email) {
+    User user = this.getUserByEmail(email);
+    List<Follow> listFollows = followRepository.findByFollowerId(user.getId());
+    List<User> following = listFollows.stream().map(Follow::getFollowing).toList();
+    List<ResUserFollow> listRes = following.stream().map(this::convertToResUserFollow).toList();
+    return listRes;
+  }
+
+  private ResUserFollow convertToResUserFollow(User user){
+    ResUserFollow res = ResUserFollow.builder()
+        .id(user.getId())
+        .fullName(user.getFullName())
+        .email(user.getEmail())
+        .image(user.getImage())
+        .build();
+    return res;
   }
 }

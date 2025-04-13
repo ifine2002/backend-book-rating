@@ -1,6 +1,5 @@
 package vn.ifine.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -65,12 +64,9 @@ public class User extends AbstractModel<Long> {
   @JoinColumn(name = "role_id")
   private Role role;
 
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-  private List<Bookmark> bookmarks;
-
   // Danh sách người mà user này theo dõi
   @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-  private List<Follow> following;
+  private List<Follow> followings;
 
   // Danh sách người đang theo dõi user này
   @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)

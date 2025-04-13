@@ -10,4 +10,6 @@ import vn.ifine.model.Book;
 public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
   List<Book> findByCreatedBy(String createdBy);
+
+  List<Book> findByIdIn(List<Long> id);
 }

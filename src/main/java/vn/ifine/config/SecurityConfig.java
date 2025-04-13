@@ -1,4 +1,4 @@
-package vn.ifine.configuration;
+package vn.ifine.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
@@ -43,7 +43,7 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http,
       CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
     String[] whiteList = { "/", "/auth/**", "/storage/**", "/v3/api-docs/**",
-        "/swagger-ui/**",
+        "/swagger-ui/**", "/static/**", "/ws/**", "/*.html",
         "/swagger-ui.html" };
     http
         .csrf(c -> c.disable())
@@ -55,7 +55,7 @@ public class SecurityConfig {
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(Customizer.withDefaults())
             .authenticationEntryPoint(customAuthenticationEntryPoint))
-            // Cấu hình bộ lọc JWT chỉ áp dụng cho các đường dẫn không nằm trong whitelist
+        // Cấu hình bộ lọc JWT chỉ áp dụng cho các đường dẫn không nằm trong whitelist
         .formLogin(f -> f.disable())
         // cấu hình sử dụng mô hình stateless
         .sessionManagement((sessionManagement) -> sessionManagement
