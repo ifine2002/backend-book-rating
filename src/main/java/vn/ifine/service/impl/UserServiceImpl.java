@@ -8,7 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.request.ReqCreateUser;
+import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ResFollowDTO;
 import vn.ifine.dto.response.ResUserFollow;
@@ -22,6 +25,7 @@ import vn.ifine.model.Role;
 import vn.ifine.model.User;
 import vn.ifine.repository.FollowRepository;
 import vn.ifine.repository.UserRepository;
+import vn.ifine.service.FileService;
 import vn.ifine.service.RoleService;
 import vn.ifine.service.UserService;
 import vn.ifine.specification.UserSpecification;
@@ -36,6 +40,7 @@ public class UserServiceImpl implements UserService {
   private final PasswordEncoder passwordEncoder;
   private final RoleService roleService;
   private final FollowRepository followRepository;
+  private final FileService fileService;
 
   @Override
   public User getById(long id) {
@@ -45,6 +50,7 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  @Transactional
   public UserResponse createUser(ReqCreateUser request) {
     // check email
     if (this.isEmailExist(request.getEmail())) {
@@ -53,7 +59,7 @@ public class UserServiceImpl implements UserService {
     User user = User.builder()
         .fullName(request.getFullName())
         .email(request.getEmail())
-        .image(request.getImage())
+        .image(fileService.upload(request.getImage()))
         .phone(request.getPhone())
         .gender(request.getGender())
         .userDOB(request.getUserDOB())
@@ -62,8 +68,8 @@ public class UserServiceImpl implements UserService {
         .build();
     String hashPassword = this.passwordEncoder.encode(request.getPassword());
     user.setPassword(hashPassword);
-    if (request.getRole() != null) {
-      Role role = roleService.getById(request.getRole().getId());
+    if (request.getRoleId() != null) {
+      Role role = roleService.getById(request.getRoleId());
       user.setRole(role);
     }
     user = userRepository.save(user);
@@ -72,16 +78,23 @@ public class UserServiceImpl implements UserService {
     return resUser;
   }
 
+  //For admin
   @Override
+  @Transactional
   public UserResponse update(long id, ReqUpdateUser reqUser) {
     User user = this.getById(id);
 
     user.setFullName(reqUser.getFullName());
-    user.setImage(reqUser.getImage());
+    user.setImage(fileService.upload(reqUser.getImage()));
     user.setPhone(reqUser.getPhone());
     user.setGender(reqUser.getGender());
     user.setUserDOB(reqUser.getUserDOB());
     user.setAddress(reqUser.getAddress());
+    user.setStatus(reqUser.getStatus());
+    if (reqUser.getRoleId() != null) {
+      Role role = roleService.getById(reqUser.getRoleId());
+      user.setRole(role);
+    }
 
     user = userRepository.save(user);
     log.info("User has been updated successfully, id={}", user.getId());
@@ -89,14 +102,17 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public UserResponse changeRole(long userId, int roleId) {
-    User user = this.getById(userId);
-    Role role = roleService.getById(roleId);
-    user.setRole(role);
+  public UserResponse changeInfo(String email, ReqChangeInfo request) {
+    User user = this.getUserByEmail(email);
+    user.setFullName(request.getFullName());
+    user.setImage(fileService.upload(request.getImage()));
+    user.setPhone(request.getPhone());
+    user.setGender(request.getGender());
+    user.setUserDOB(request.getUserDOB());
+    user.setAddress(request.getAddress());
 
-    // save
     user = userRepository.save(user);
-    log.info("User has been changed role successfully, id={}", user.getId());
+    log.info("User has been updated successfully, id={}", user.getId());
     return this.convertToUserResponse(user);
   }
 
@@ -280,5 +296,19 @@ public class UserServiceImpl implements UserService {
         .image(user.getImage())
         .build();
     return res;
+  }
+
+  @Override
+  public UserResponse updateAvatar(MultipartFile file, String email){
+    User user = getUserByEmail(email);
+
+    // Upload lên MinIO
+    String fileUrl = fileService.upload(file);
+
+    // Cập nhật avatar URL trong DB
+    user.setImage(fileUrl);
+    userRepository.save(user);
+
+    return this.convertToUserResponse(user);
   }
 }

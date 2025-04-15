@@ -3,6 +3,7 @@ package vn.ifine.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import java.io.Serializable;
 import java.time.LocalDate;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,11 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.validator.EnumPattern;
 import vn.ifine.dto.validator.ValidImage;
 import vn.ifine.util.GenderEnum;
-import vn.ifine.util.UserStatus;
 
-@Setter
 @Getter
-public class ReqUpdateUser {
+@Setter
+public class ReqChangeInfo implements Serializable {
   @NotBlank(message = "fullName must be not blank")
   private String fullName;
 
@@ -36,10 +36,4 @@ public class ReqUpdateUser {
 
   @NotNull(message = "address must be not null")
   private String address;
-
-  @EnumPattern(name = "status", regexp = "(?i)ACTIVE|INACTIVE|NONE|DELETED")
-  private UserStatus status;
-
-  @NotNull(message = "role must be not null")
-  private Integer roleId;
 }

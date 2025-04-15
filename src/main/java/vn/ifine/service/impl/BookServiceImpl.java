@@ -30,6 +30,7 @@ import vn.ifine.repository.CategoryRepository;
 import vn.ifine.repository.CommentRepository;
 import vn.ifine.repository.RatingRepository;
 import vn.ifine.service.BookService;
+import vn.ifine.service.FileService;
 import vn.ifine.service.UserService;
 import vn.ifine.specification.BookSpecification;
 import vn.ifine.util.BookStatus;
@@ -45,14 +46,16 @@ public class BookServiceImpl implements BookService {
   private final RatingRepository ratingRepository;
   private final CommentRepository commentRepository;
   private final SimpMessagingTemplate messagingTemplate;
+  private final FileService fileService;
 
   //for admin
   @Override
+  @Transactional
   public ResBook create(ReqBookDTO reqBookDTO) {
     Book book = Book.builder()
         .name(reqBookDTO.getName())
         .description(reqBookDTO.getDescription())
-        .image(reqBookDTO.getImage())
+        .image(fileService.upload(reqBookDTO.getImage()))
         .publishedDate(reqBookDTO.getPublishedDate())
         .bookFormat(reqBookDTO.getBookFormat())
         .bookSaleLink(reqBookDTO.getBookSaleLink())
@@ -61,10 +64,8 @@ public class BookServiceImpl implements BookService {
         .status(reqBookDTO.getStatus())
         .build();
 
-    if (reqBookDTO.getCategories() != null && !reqBookDTO.getCategories().isEmpty()) {
-      Set<Integer> reqCategory = reqBookDTO.getCategories().stream().map(x -> x.getId()).collect(
-          Collectors.toSet());
-      Set<Category> categoriesDB = this.categoryRepository.findByIdIn(reqCategory);
+    if (reqBookDTO.getCategoryIds() != null && !reqBookDTO.getCategoryIds().isEmpty()) {
+      Set<Category> categoriesDB = this.categoryRepository.findByIdIn(reqBookDTO.getCategoryIds());
       book.setCategories(categoriesDB);
     }
     bookRepository.save(book);
@@ -73,12 +74,13 @@ public class BookServiceImpl implements BookService {
   }
 
   //for user
+  @Transactional
   @Override
   public ResBook uploadBook(ReqBookDTO reqBookDTO) {
     Book book = Book.builder()
         .name(reqBookDTO.getName())
         .description(reqBookDTO.getDescription())
-        .image(reqBookDTO.getImage())
+        .image(fileService.upload(reqBookDTO.getImage()))
         .publishedDate(reqBookDTO.getPublishedDate())
         .bookFormat(reqBookDTO.getBookFormat())
         .bookSaleLink(reqBookDTO.getBookSaleLink())
@@ -87,24 +89,23 @@ public class BookServiceImpl implements BookService {
         .status(BookStatus.NONE)
         .build();
 
-    if (reqBookDTO.getCategories() != null && !reqBookDTO.getCategories().isEmpty()) {
-      Set<Integer> reqCategory = reqBookDTO.getCategories().stream().map(x -> x.getId()).collect(
-          Collectors.toSet());
-      Set<Category> categoriesDB = this.categoryRepository.findByIdIn(reqCategory);
+    if (reqBookDTO.getCategoryIds() != null && !reqBookDTO.getCategoryIds().isEmpty()) {
+      Set<Category> categoriesDB = this.categoryRepository.findByIdIn(reqBookDTO.getCategoryIds());
       book.setCategories(categoriesDB);
     }
     bookRepository.save(book);
-    log.info("User save book success, bookId={}", book.getId());
+    log.info("User upload book success, bookId={}", book.getId());
     return this.convertToResBook(book);
   }
 
   //admin
+  @Transactional
   @Override
   public ResBook update(long bookId, ReqBookDTO reqBookDTO) {
     Book book = this.getById(bookId);
     book.setName(reqBookDTO.getName());
     book.setDescription(reqBookDTO.getDescription());
-    book.setImage(reqBookDTO.getImage());
+    book.setImage(fileService.upload(reqBookDTO.getImage()));
     book.setPublishedDate(reqBookDTO.getPublishedDate());
     book.setBookFormat(reqBookDTO.getBookFormat());
     book.setBookSaleLink(reqBookDTO.getBookSaleLink());
@@ -112,10 +113,8 @@ public class BookServiceImpl implements BookService {
     book.setAuthor(reqBookDTO.getAuthor());
     book.setStatus(reqBookDTO.getStatus());
 
-    if (reqBookDTO.getCategories() != null && !reqBookDTO.getCategories().isEmpty()) {
-      Set<Integer> reqCategory = reqBookDTO.getCategories().stream().map(x -> x.getId()).collect(
-          Collectors.toSet());
-      Set<Category> categoriesDB = this.categoryRepository.findByIdIn(reqCategory);
+    if (reqBookDTO.getCategoryIds() != null && !reqBookDTO.getCategoryIds().isEmpty()) {
+      Set<Category> categoriesDB = this.categoryRepository.findByIdIn(reqBookDTO.getCategoryIds());
       book.setCategories(categoriesDB);
     }
     bookRepository.save(book);

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,17 +19,17 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.request.ReqCreateUser;
+import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResFollowDTO;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
-import vn.ifine.model.Follow;
 import vn.ifine.model.User;
 import vn.ifine.service.UserService;
 import vn.ifine.util.UserStatus;
@@ -43,9 +44,9 @@ public class UserController {
 
   private final UserService userService;
 
-  @PostMapping("/")
+  @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<UserResponse>> create(
-      @Valid @RequestBody ReqCreateUser reqUser) {
+      @Valid ReqCreateUser reqUser) {
     log.info("Request add user, {} {}", reqUser.getEmail(), reqUser.getFullName());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created("Create a user success",
@@ -63,13 +64,23 @@ public class UserController {
             resUser));
   }
 
-  @PutMapping("/{id}")
+  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<UserResponse>> update(@PathVariable @Min(1) long id,
-      @Valid @RequestBody ReqUpdateUser reqUser) {
+      @Valid ReqUpdateUser request) {
     log.info("Request update user, id={}", id);
-    UserResponse user = userService.update(id, reqUser);
+    UserResponse user = userService.update(id, request);
     return ResponseEntity.ok()
         .body(ApiResponse.success("Update a user success",
+            user));
+  }
+
+  @PutMapping(value = "/change-info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<ApiResponse<UserResponse>> changeInfoForUser(Principal principal,
+      @Valid ReqChangeInfo request) {
+    log.info("Request change info user, emailUser={}", principal.getName());
+    UserResponse user = userService.changeInfo(principal.getName(), request);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Change info user success",
             user));
   }
 
@@ -126,16 +137,6 @@ public class UserController {
             this.userService.getAllActive(spec, pageable)));
   }
 
-  // Update role
-  @PatchMapping("/change-role/{userId}")
-  public ResponseEntity<ApiResponse<UserResponse>> changeRole(@PathVariable @Min(1) long userId,
-      @RequestParam @Min(1) int roleId) {
-    log.info("Request update role-user, userId={}", userId);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Update role for user success",
-            this.userService.changeRole(userId, roleId)));
-  }
-
   @PostMapping("/follow")
   public ResponseEntity<ApiResponse<ResFollowDTO>> followUser(
       @RequestParam @Min(1) Long followingId, Principal principal) {
@@ -182,6 +183,16 @@ public class UserController {
         principal.getName(), followerId);
     this.userService.unFollowForFollowing(followerId, principal.getName());
     return ResponseEntity.ok().body(ApiResponse.success("Unfollow user from following success", null));
+  }
+
+  // Update avatar for user
+  @PatchMapping("/updateAvatar")
+  public ResponseEntity<ApiResponse<UserResponse>> updateAvatar(@RequestParam("file") MultipartFile file,
+      Principal principal) {
+    log.info("Request update avatar user, emailUser={}", principal.getName());
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Update role for user success",
+            this.userService.updateAvatar(file, principal.getName())));
   }
 
 

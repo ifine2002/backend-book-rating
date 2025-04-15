@@ -1,20 +1,23 @@
-package vn.ifine.service;
+package vn.ifine.service.impl;
 
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.ifine.dto.request.ReqCategoryDTO;
 import vn.ifine.dto.response.ResCategory;
 import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Category;
 import vn.ifine.repository.CategoryRepository;
+import vn.ifine.service.CategoryService;
+import vn.ifine.service.FileService;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "CATEGORY-SERVICE-IMPL")
-public class CategoryServiceImpl implements CategoryService{
+public class CategoryServiceImpl implements CategoryService {
 
   @Override
   public boolean isNameExist(String name) {
@@ -22,14 +25,16 @@ public class CategoryServiceImpl implements CategoryService{
   }
 
   private final CategoryRepository categoryRepository;
+  private final FileService fileService;
 
   @Override
+  @Transactional
   public ResCategory create(ReqCategoryDTO reqCategory) {
     log.info("Request create category, name={}", reqCategory.getName());
     Category category = Category.builder()
         .name(reqCategory.getName())
         .description(reqCategory.getDescription())
-        .image(reqCategory.getImage())
+        .image(fileService.upload(reqCategory.getImage()))
         .build();
 
     categoryRepository.save(category);
@@ -37,13 +42,14 @@ public class CategoryServiceImpl implements CategoryService{
   }
 
   @Override
+  @Transactional
   public ResCategory update(int categoryId, ReqCategoryDTO reqCategory) {
     log.info("Request update category, name={}", reqCategory.getName());
     Category categoryDB = this.getById(categoryId);
     if(categoryDB != null){
       categoryDB.setName(reqCategory.getName());
       categoryDB.setDescription(reqCategory.getDescription());
-      categoryDB.setImage(reqCategory.getImage());
+      categoryDB.setImage(fileService.upload(reqCategory.getImage()));
     }
     categoryRepository.save(categoryDB);
     return this.convertToResCategory(categoryDB);

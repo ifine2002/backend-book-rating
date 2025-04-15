@@ -6,12 +6,16 @@ import jakarta.validation.constraints.Pattern;
 import java.io.Serializable;
 import java.time.LocalDate;
 import lombok.Getter;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.validator.EnumPattern;
+import vn.ifine.dto.validator.ValidImage;
 import vn.ifine.model.Role;
 import vn.ifine.util.GenderEnum;
 import vn.ifine.util.UserStatus;
 
 @Getter
+@Setter
 public class ReqCreateUser implements Serializable {
   @NotBlank(message = "fullName must be not blank")
   private String fullName;
@@ -22,7 +26,12 @@ public class ReqCreateUser implements Serializable {
   @NotBlank(message = "password must be not blank")
   private String password;
 
-  private String image;
+  @ValidImage(
+      message = "Invalid image file",
+      maxSize = 1024 * 1024 * 10, // 10MB
+      allowedExtensions = {"jpg", "jpeg", "png", "gif"}
+  )
+  private MultipartFile image;
 
   @Pattern(regexp = "^\\d{10}$", message = "phone invalid format")
   private String phone;
@@ -40,5 +49,5 @@ public class ReqCreateUser implements Serializable {
   private UserStatus status;
 
   @NotNull(message = "role must be not null")
-  private Role role;
+  private Integer roleId;
 }

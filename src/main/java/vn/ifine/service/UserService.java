@@ -1,18 +1,17 @@
 package vn.ifine.service;
 
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.request.ReqCreateUser;
-import vn.ifine.dto.request.ReqRegisterDTO;
+import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ResFollowDTO;
 import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
-import vn.ifine.model.Follow;
 import vn.ifine.model.User;
 import vn.ifine.util.UserStatus;
 
@@ -28,8 +27,6 @@ public interface UserService {
   void remove(long id);
 
   void changeStatus(long id, UserStatus status);
-
-  UserResponse changeRole(long userId, int roleId);
 
   User getUserByEmail(String email);
 
@@ -54,4 +51,9 @@ public interface UserService {
   List<ResUserFollow> getListFollower(String email);
   //List user bạn đang follow
   List<ResUserFollow> getListFollowing(String email);
+
+  UserResponse updateAvatar(MultipartFile file, String email);
+
+  UserResponse changeInfo(String email, ReqChangeInfo request);
+
 }

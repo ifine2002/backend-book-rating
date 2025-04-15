@@ -5,11 +5,16 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Set;
 import lombok.Getter;
+import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.validator.EnumPattern;
+import vn.ifine.dto.validator.ValidImage;
 import vn.ifine.model.Category;
 import vn.ifine.util.BookStatus;
 
 @Getter
+@Setter
 public class ReqBookDTO {
 
   @NotBlank(message = "name must be not blank")
@@ -18,9 +23,15 @@ public class ReqBookDTO {
   @NotBlank(message = "description must be not blank")
   private String description;
 
-  private String image;
+  @ValidImage(
+      message = "Invalid image file",
+      maxSize = 1024 * 1024 * 10, // 10MB
+      allowedExtensions = {"jpg", "jpeg", "png", "gif"}
+  )
+  private MultipartFile image;
 
   @NotNull(message = "publishedDate must be not null")
+  @DateTimeFormat(pattern = "yyyy-MM-dd")
   private LocalDate publishedDate;
 
   @NotBlank(message = "bookFormat must be not blank")
@@ -38,6 +49,6 @@ public class ReqBookDTO {
   @EnumPattern(name = "status", regexp = "(?i)ACTIVE|INACTIVE|NONE|DELETED")
   private BookStatus status;
 
-  private Set<Category> categories;
+  private Set<Integer> categoryIds;
 
 }

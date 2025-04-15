@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,9 +41,9 @@ public class BookController {
 
   private final BookService bookService;
 
-  @PostMapping("/")
+  @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<ResBook>> create(
-      @Valid @RequestBody ReqBookDTO reqBookDTO) {
+      @Valid ReqBookDTO reqBookDTO) {
     log.info("Request create book, {}", reqBookDTO.getName());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created("Create a book success",
@@ -58,9 +59,9 @@ public class BookController {
             bookService.convertToResBook(book)));
   }
 
-  @PutMapping("/{id}")
+  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<ResBook>> update(@PathVariable @Min(1) long id,
-      @Valid @RequestBody ReqBookDTO reqBookDTO) {
+      @Valid ReqBookDTO reqBookDTO) {
     log.info("Request update book, id={}", id);
     return ResponseEntity.ok()
         .body(ApiResponse.success("Update a book success",
@@ -100,9 +101,9 @@ public class BookController {
             this.bookService.getAllBookOfUser(email)));
   }
 
-  @PostMapping("/upload-post")
+  @PostMapping(value = "/upload-post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<ResBook>> uploadPost(
-      @Valid @RequestBody ReqBookDTO reqBookDTO) {
+      @Valid ReqBookDTO reqBookDTO) {
     log.info("Request upload book, {}", reqBookDTO.getName());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created("Create a book success",
