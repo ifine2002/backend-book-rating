@@ -14,6 +14,7 @@ import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ResFollowDTO;
+import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
@@ -50,6 +51,34 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public ResUserDetail getUserDetail(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found with id = " + userId));
+    List<ResUserFollow> listFollower = this.getListFollower(user.getEmail());
+    List<ResUserFollow> listFollowing = this.getListFollowing(user.getEmail());
+
+    ResUserDetail resUser = ResUserDetail.builder()
+        .id(user.getId())
+        .fullName(user.getFullName())
+        .email(user.getEmail())
+        .image(user.getImage())
+        .phone(user.getPhone())
+        .gender(user.getGender())
+        .userDOB(user.getUserDOB())
+        .address(user.getAddress())
+        .status(user.getStatus())
+        .role(user.getRole())
+        .follower(Long.valueOf(listFollower.size()))
+        .following(Long.valueOf(listFollowing.size()))
+        .createdAt(user.getCreatedAt())
+        .updatedAt(user.getUpdatedAt())
+        .createBy(user.getCreatedBy())
+        .updatedBy(user.getUpdatedBy())
+        .build();
+    return resUser;
+  }
+
+  @Override
   @Transactional
   public UserResponse createUser(ReqCreateUser request) {
     // check email
@@ -59,7 +88,7 @@ public class UserServiceImpl implements UserService {
     User user = User.builder()
         .fullName(request.getFullName())
         .email(request.getEmail())
-        .image(fileService.upload(request.getImage()))
+        .image((request.getImage() != null) ? fileService.upload(request.getImage()) : null)
         .phone(request.getPhone())
         .gender(request.getGender())
         .userDOB(request.getUserDOB())
@@ -85,7 +114,12 @@ public class UserServiceImpl implements UserService {
     User user = this.getById(id);
 
     user.setFullName(reqUser.getFullName());
-    user.setImage(fileService.upload(reqUser.getImage()));
+    if(reqUser.getImage() != null){
+      user.setImage(fileService.upload(reqUser.getImage()));
+    }
+    if(reqUser.isDeleteImage()){
+      user.setImage(null);
+    }
     user.setPhone(reqUser.getPhone());
     user.setGender(reqUser.getGender());
     user.setUserDOB(reqUser.getUserDOB());

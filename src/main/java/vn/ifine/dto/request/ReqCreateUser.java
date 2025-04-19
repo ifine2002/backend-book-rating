@@ -29,23 +29,21 @@ public class ReqCreateUser implements Serializable {
   @ValidImage(
       message = "Invalid image file",
       maxSize = 1024 * 1024 * 10, // 10MB
-      allowedExtensions = {"jpg", "jpeg", "png", "gif"}
+      allowedExtensions = {"jpg", "jpeg", "png"}
   )
   private MultipartFile image;
 
   @Pattern(regexp = "^\\d{10}$", message = "phone invalid format")
   private String phone;
 
-  @EnumPattern(name = "gender", regexp = "(?i)MALE|FEMALE|OTHER")
+  @EnumPattern(name = "gender", regexp = "MALE|FEMALE|OTHER")
   private GenderEnum gender;
 
-  @NotNull(message = "dateOfBirth must be not null")
   private LocalDate userDOB;
 
-  @NotNull(message = "address must be not null")
   private String address;
 
-  @EnumPattern(name = "status", regexp = "(?i)ACTIVE|INACTIVE|NONE|DELETED")
+  @EnumPattern(name = "status", regexp = "ACTIVE|INACTIVE|NONE|DELETED")
   private UserStatus status;
 
   @NotNull(message = "role must be not null")

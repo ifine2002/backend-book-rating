@@ -58,7 +58,7 @@ public class RoleServiceImpl implements RoleService {
     Role dbRole = this.getById(id);
     dbRole.setName(role.getName());
     dbRole.setDescription(role.getDescription());
-
+    dbRole.setIsActive(role.isActive());
     // check permission
     if (role.getPermissions() != null && !role.getPermissions().isEmpty()) {
       List<Long> reqPermisssions = role.getPermissions().stream().map(x -> x.getId())

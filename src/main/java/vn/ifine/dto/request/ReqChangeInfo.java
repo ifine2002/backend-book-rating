@@ -28,7 +28,7 @@ public class ReqChangeInfo implements Serializable {
   @Pattern(regexp = "^\\d{10}$", message = "phone invalid format")
   private String phone;
 
-  @EnumPattern(name = "gender", regexp = "(?i)MALE|FEMALE|OTHER")
+  @EnumPattern(name = "gender", regexp = "MALE|FEMALE|OTHER")
   private GenderEnum gender;
 
   @NotNull(message = "dateOfBirth must be not null")

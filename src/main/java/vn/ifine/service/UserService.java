@@ -9,6 +9,7 @@ import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ResFollowDTO;
+import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
@@ -56,4 +57,5 @@ public interface UserService {
 
   UserResponse changeInfo(String email, ReqChangeInfo request);
 
+  ResUserDetail getUserDetail(Long userId);
 }

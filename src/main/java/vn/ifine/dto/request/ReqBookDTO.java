@@ -46,7 +46,7 @@ public class ReqBookDTO {
   @NotBlank(message = "author must be not blank")
   private String author;
 
-  @EnumPattern(name = "status", regexp = "(?i)ACTIVE|INACTIVE|NONE|DELETED")
+  @EnumPattern(name = "status", regexp = "ACTIVE|INACTIVE|NONE|DELETED")
   private BookStatus status;
 
   private Set<Integer> categoryIds;

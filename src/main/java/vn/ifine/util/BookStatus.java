@@ -4,28 +4,28 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum BookStatus {
-  @JsonProperty("active")
+//  @JsonProperty("active")
   ACTIVE,
-  @JsonProperty("inactive")
+//  @JsonProperty("inactive")
   INACTIVE,
-  @JsonProperty("none")
+//  @JsonProperty("none")
   NONE,
-  @JsonProperty("deleted")
+//  @JsonProperty("deleted")
   DELETED;
 
-  @JsonCreator
-  public static BookStatus fromString(String value) {
-    if (value == null) {
-      return null;
-    }
-
-    String lowerCase = value.toLowerCase();
-    for (BookStatus status : BookStatus.values()) {
-      if (status.name().toLowerCase().equals(lowerCase)) {
-        return status;
-      }
-    }
-
-    throw new IllegalArgumentException("Invalid status value: " + value);
-  }
+//  @JsonCreator
+//  public static BookStatus fromString(String value) {
+//    if (value == null) {
+//      return null;
+//    }
+//
+//    String lowerCase = value.toLowerCase();
+//    for (BookStatus status : BookStatus.values()) {
+//      if (status.name().toLowerCase().equals(lowerCase)) {
+//        return status;
+//      }
+//    }
+//
+//    throw new IllegalArgumentException("Invalid status value: " + value);
+//  }
 }
