@@ -21,4 +21,6 @@ public class ReqCategoryDTO {
       allowedExtensions = {"jpg", "jpeg", "png", "gif"}
   )
   private MultipartFile image;
+
+  private boolean deleteImage;
 }

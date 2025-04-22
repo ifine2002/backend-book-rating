@@ -30,6 +30,8 @@ public class ReqBookDTO {
   )
   private MultipartFile image;
 
+  private boolean deleteImage;
+
   @NotNull(message = "publishedDate must be not null")
   @DateTimeFormat(pattern = "yyyy-MM-dd")
   private LocalDate publishedDate;

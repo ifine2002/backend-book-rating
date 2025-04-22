@@ -13,12 +13,10 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
-import vn.ifine.dto.response.ResFollowDTO;
 import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
-import vn.ifine.exception.CustomException;
 import vn.ifine.exception.ResourceAlreadyExistsException;
 import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Follow;
@@ -27,6 +25,7 @@ import vn.ifine.model.User;
 import vn.ifine.repository.FollowRepository;
 import vn.ifine.repository.UserRepository;
 import vn.ifine.service.FileService;
+import vn.ifine.service.FollowService;
 import vn.ifine.service.RoleService;
 import vn.ifine.service.UserService;
 import vn.ifine.specification.UserSpecification;
@@ -54,10 +53,10 @@ public class UserServiceImpl implements UserService {
   public ResUserDetail getUserDetail(Long userId) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResourceNotFoundException("User not found with id = " + userId));
-    List<ResUserFollow> listFollower = this.getListFollower(user.getEmail());
-    List<ResUserFollow> listFollowing = this.getListFollowing(user.getEmail());
+    Long countFollower = followRepository.countByFollowingId(userId);
+    Long countFollowing = followRepository.countByFollowerId(userId);
 
-    ResUserDetail resUser = ResUserDetail.builder()
+    return ResUserDetail.builder()
         .id(user.getId())
         .fullName(user.getFullName())
         .email(user.getEmail())
@@ -68,14 +67,13 @@ public class UserServiceImpl implements UserService {
         .address(user.getAddress())
         .status(user.getStatus())
         .role(user.getRole())
-        .follower(Long.valueOf(listFollower.size()))
-        .following(Long.valueOf(listFollowing.size()))
+        .follower(countFollower)
+        .following(countFollowing)
         .createdAt(user.getCreatedAt())
         .updatedAt(user.getUpdatedAt())
         .createBy(user.getCreatedBy())
         .updatedBy(user.getUpdatedBy())
         .build();
-    return resUser;
   }
 
   @Override
@@ -181,7 +179,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserResponse convertToUserResponse(User user) {
-    UserResponse resUser = UserResponse.builder()
+    return UserResponse.builder()
         .id(user.getId())
         .fullName(user.getFullName())
         .email(user.getEmail())
@@ -197,7 +195,6 @@ public class UserServiceImpl implements UserService {
         .createBy(user.getCreatedBy())
         .updatedBy(user.getUpdatedBy())
         .build();
-    return resUser;
   }
 
   @Override
@@ -253,83 +250,6 @@ public class UserServiceImpl implements UserService {
 
     rs.setResult(listUser);
     return rs;
-  }
-
-  @Override
-  public ResFollowDTO followUser(String email, Long followingId) {
-    log.info("Request follow user, emailFollower={}, followingId={}", email, followingId);
-    User follower = this.getUserByEmail(email);
-    if(follower.getId() == followingId){
-      throw  new CustomException("Can't follow myself");
-    }
-    User following = this.getById(followingId);
-    Follow follow = Follow.builder()
-        .follower(follower)
-        .following(following)
-        .build();
-    follow = followRepository.save(follow);
-
-    ResFollowDTO res = ResFollowDTO.builder()
-        .id(follow.getId())
-        .followerId(follow.getFollower().getId())
-        .followingId(follow.getFollowing().getId())
-        .createdAt(follow.getCreatedAt())
-        .createBy(follow.getCreatedBy())
-        .build();
-    return res;
-  }
-
-  // unfollow cho người đi follow (A follow B) -> A hủy follow B
-  @Override
-  public void unFollowForFollower(String email, Long followingId) {
-    log.info("Request unfollow form follower user, emailFollower={}, followingId={}", email, followingId);
-    User follower = this.getUserByEmail(email);
-    Follow follow = followRepository.findByFollowerIdAndFollowingId(follower.getId(), followingId)
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "Not found follow with followerId=" + follower.getId() + " and followingId="
-                + followingId));
-    followRepository.delete(follow);
-  }
-
-  // unfollow cho người được follow (A follow B) -> B hủy follow của A
-  @Override
-  public void unFollowForFollowing(Long followerId, String email) {
-    log.info("Request unfollow from following user, followerId={}, emailFollowing={}", followerId, email);
-    User following = this.getUserByEmail(email);
-    Follow follow = followRepository.findByFollowerIdAndFollowingId(followerId, following.getId())
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "Not found follow with followerId=" + followerId + " and followingId="
-                + following.getId()));
-    followRepository.delete(follow);
-  }
-  //List user đang follow bạn
-  @Override
-  public List<ResUserFollow> getListFollower(String email) {
-    User user = this.getUserByEmail(email);
-    List<Follow> listFollows = followRepository.findByFollowingId(user.getId());
-    List<User> follower = listFollows.stream().map(Follow::getFollower).toList();
-    List<ResUserFollow> listRes = follower.stream().map(this::convertToResUserFollow).toList();
-    return listRes;
-  }
-
-  //List user bạn đang follow
-  @Override
-  public List<ResUserFollow> getListFollowing(String email) {
-    User user = this.getUserByEmail(email);
-    List<Follow> listFollows = followRepository.findByFollowerId(user.getId());
-    List<User> following = listFollows.stream().map(Follow::getFollowing).toList();
-    List<ResUserFollow> listRes = following.stream().map(this::convertToResUserFollow).toList();
-    return listRes;
-  }
-
-  private ResUserFollow convertToResUserFollow(User user){
-    ResUserFollow res = ResUserFollow.builder()
-        .id(user.getId())
-        .fullName(user.getFullName())
-        .email(user.getEmail())
-        .image(user.getImage())
-        .build();
-    return res;
   }
 
   @Override

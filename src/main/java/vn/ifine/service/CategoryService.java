@@ -1,9 +1,11 @@
 package vn.ifine.service;
 
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import vn.ifine.dto.request.ReqCategoryDTO;
 import vn.ifine.dto.response.ResCategory;
+import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.model.Category;
 
 @Service
@@ -15,7 +17,7 @@ public interface CategoryService {
 
   void remove(int categoryId);
 
-  List<ResCategory> getAll();
+  ResultPaginationDTO getCategories(Specification<Category> spec, Pageable pageable);
 
   Category getById(int id);
 

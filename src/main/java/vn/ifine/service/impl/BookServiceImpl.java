@@ -55,7 +55,7 @@ public class BookServiceImpl implements BookService {
     Book book = Book.builder()
         .name(reqBookDTO.getName())
         .description(reqBookDTO.getDescription())
-        .image(fileService.upload(reqBookDTO.getImage()))
+        .image(reqBookDTO.getImage() != null ? fileService.upload(reqBookDTO.getImage()) : null)
         .publishedDate(reqBookDTO.getPublishedDate())
         .bookFormat(reqBookDTO.getBookFormat())
         .bookSaleLink(reqBookDTO.getBookSaleLink())
@@ -80,7 +80,7 @@ public class BookServiceImpl implements BookService {
     Book book = Book.builder()
         .name(reqBookDTO.getName())
         .description(reqBookDTO.getDescription())
-        .image(fileService.upload(reqBookDTO.getImage()))
+        .image(reqBookDTO.getImage() != null ? fileService.upload(reqBookDTO.getImage()) : null)
         .publishedDate(reqBookDTO.getPublishedDate())
         .bookFormat(reqBookDTO.getBookFormat())
         .bookSaleLink(reqBookDTO.getBookSaleLink())
@@ -105,7 +105,14 @@ public class BookServiceImpl implements BookService {
     Book book = this.getById(bookId);
     book.setName(reqBookDTO.getName());
     book.setDescription(reqBookDTO.getDescription());
-    book.setImage(fileService.upload(reqBookDTO.getImage()));
+
+    if(reqBookDTO.getImage() != null){
+      book.setImage(fileService.upload(reqBookDTO.getImage()));
+    }
+    if(reqBookDTO.isDeleteImage()){
+      book.setImage(null);
+    }
+
     book.setPublishedDate(reqBookDTO.getPublishedDate());
     book.setBookFormat(reqBookDTO.getBookFormat());
     book.setBookSaleLink(reqBookDTO.getBookSaleLink());
@@ -114,6 +121,7 @@ public class BookServiceImpl implements BookService {
     book.setStatus(reqBookDTO.getStatus());
 
     if (reqBookDTO.getCategoryIds() != null && !reqBookDTO.getCategoryIds().isEmpty()) {
+
       Set<Category> categoriesDB = this.categoryRepository.findByIdIn(reqBookDTO.getCategoryIds());
       book.setCategories(categoriesDB);
     }
@@ -124,7 +132,7 @@ public class BookServiceImpl implements BookService {
 
   @Override
   public Book getById(long id) {
-    log.info("Request get book by id, bookId=[}", id);
+    log.info("Request get book by id, bookId={}", id);
     Optional<Book> bookOptional = bookRepository.findById(id);
     if (!bookOptional.isPresent()) {
       throw new ResourceNotFoundException("Not found book with id = " + id);
