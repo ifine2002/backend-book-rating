@@ -19,39 +19,27 @@ import vn.ifine.util.BookStatus;
 public class ResDetailBook {
 
   private Long id;
-
   private String name;
-
   private String description;
-
   private String image;
-
   private LocalDate publishedDate;
-
   private String bookFormat;
-
   private String bookSaleLink;
-
   private String language;
-
   private String author;
-
   private BookStatus status;
-
-  private double averageRating;
-
-  private int ratingCount;
-
   private Set<ResCategoryInBook> categories;
 
-  private List<ResCommentDto> comments;
+  private ResFeedBack stars;
+
+  private List<ResCommentDTO> comments;
+
+  private List<ResReviewDTO> reviews;
+
 
   private String createdBy;
-
   private String updatedBy;
-
   private Date createdAt;
-
   private Date updatedAt;
 
 }

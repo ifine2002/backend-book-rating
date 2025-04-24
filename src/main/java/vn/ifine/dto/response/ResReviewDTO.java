@@ -12,14 +12,20 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResFollowDTO {
-  private Long id;
+public class ResReviewDTO {
 
-  private Long followerId;
+  private String fullName;
 
-  private Long followingId;
+  private String image;
+
+  private Long userId;
+
+  private Long stars;
+
+  private String comment;
 
   private Date createdAt;
 
-  private String createdBy;
+  private Date updateAt;
+
 }

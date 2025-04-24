@@ -113,7 +113,7 @@ public class FollowServiceImpl implements FollowService {
         .followerId(follow.getFollower().getId())
         .followingId(follow.getFollowing().getId())
         .createdAt(follow.getCreatedAt())
-        .createBy(follow.getCreatedBy())
+        .createdBy(follow.getCreatedBy())
         .build();
   }
 

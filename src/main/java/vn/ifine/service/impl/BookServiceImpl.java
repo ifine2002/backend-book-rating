@@ -1,5 +1,6 @@
 package vn.ifine.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -9,29 +10,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.ifine.dto.request.ReqBookDTO;
-import vn.ifine.dto.request.ReviewRequestDto;
 import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResCategoryInBook;
-import vn.ifine.dto.response.ResCommentDto;
+import vn.ifine.dto.response.ResCommentDTO;
 import vn.ifine.dto.response.ResDetailBook;
+import vn.ifine.dto.response.ResFeedBack;
+import vn.ifine.dto.response.ResReviewDTO;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Book;
 import vn.ifine.model.Category;
 import vn.ifine.model.Comment;
 import vn.ifine.model.Rating;
-import vn.ifine.model.User;
 import vn.ifine.repository.BookRepository;
 import vn.ifine.repository.CategoryRepository;
 import vn.ifine.repository.CommentRepository;
 import vn.ifine.repository.RatingRepository;
 import vn.ifine.service.BookService;
 import vn.ifine.service.FileService;
-import vn.ifine.service.UserService;
 import vn.ifine.specification.BookSpecification;
 import vn.ifine.util.BookStatus;
 
@@ -40,15 +39,13 @@ import vn.ifine.util.BookStatus;
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
 
-  private final UserService userService;
   private final BookRepository bookRepository;
   private final CategoryRepository categoryRepository;
   private final RatingRepository ratingRepository;
   private final CommentRepository commentRepository;
-  private final SimpMessagingTemplate messagingTemplate;
   private final FileService fileService;
 
-  //for admin
+  // for admin
   @Override
   @Transactional
   public ResBook create(ReqBookDTO reqBookDTO) {
@@ -73,7 +70,7 @@ public class BookServiceImpl implements BookService {
     return this.convertToResBook(book);
   }
 
-  //for user
+  // for user
   @Transactional
   @Override
   public ResBook uploadBook(ReqBookDTO reqBookDTO) {
@@ -98,7 +95,7 @@ public class BookServiceImpl implements BookService {
     return this.convertToResBook(book);
   }
 
-  //admin
+  // admin
   @Transactional
   @Override
   public ResBook update(long bookId, ReqBookDTO reqBookDTO) {
@@ -106,10 +103,10 @@ public class BookServiceImpl implements BookService {
     book.setName(reqBookDTO.getName());
     book.setDescription(reqBookDTO.getDescription());
 
-    if(reqBookDTO.getImage() != null){
+    if (reqBookDTO.getImage() != null) {
       book.setImage(fileService.upload(reqBookDTO.getImage()));
     }
-    if(reqBookDTO.isDeleteImage()){
+    if (reqBookDTO.isDeleteImage()) {
       book.setImage(null);
     }
 
@@ -142,7 +139,7 @@ public class BookServiceImpl implements BookService {
 
   @Override
   public void remove(long id) {
-    //check comment
+    // check comment
     Book book = this.getById(id);
     bookRepository.delete(book);
   }
@@ -232,16 +229,47 @@ public class BookServiceImpl implements BookService {
         .mapToLong(Rating::getStars)
         .average()
         .orElse(0.0);
-    List<Comment> comments = commentRepository.findByBookIdOrderByCreatedAtDesc(id);
-    List<ResCommentDto> commentDtos = comments.stream()
-        .map(c -> ResCommentDto.builder()
+    ResFeedBack resFeedBack = new ResFeedBack();
+    resFeedBack.setAverageRating(avgRating);
+    resFeedBack.setRatingCount(ratings.size());
+    resFeedBack.setTotalOneStar(ratingRepository.countByBookIdAndStars(id, 1));
+    resFeedBack.setTotalTwoStar(ratingRepository.countByBookIdAndStars(id, 2));
+    resFeedBack.setTotalThreeStar(ratingRepository.countByBookIdAndStars(id, 3));
+    resFeedBack.setTotalFourStar(ratingRepository.countByBookIdAndStars(id, 4));
+    resFeedBack.setTotalFiveStar(ratingRepository.countByBookIdAndStars(id, 5));
+
+    List<Comment> comments = commentRepository.findByBookIdAndIsRatingCommentFalseOrderByUpdatedAtDesc(id);
+    List<ResCommentDTO> commentDTOs = comments.stream()
+        .map(c -> ResCommentDTO.builder()
             .id(c.getId())
-            .email(c.getUser().getEmail())
+            .fullName(c.getUser().getFullName())
+            .userId(c.getUser().getId())
+            .image(c.getUser().getImage())
             .comment(c.getComment())
             .createdAt(c.getCreatedAt())
             .updatedAt(c.getUpdatedAt())
             .build())
         .toList();
+
+    List<Comment> commentReview = commentRepository.findByBookIdAndIsRatingCommentTrue(id);
+
+    List<ResReviewDTO> resReviewDTOs = ratings.stream().map(rv -> {
+      // Tìm comment tương ứng với rating (dựa trên userId)
+      Optional<Comment> ratingComment = commentReview.stream()
+          .filter(comment -> comment.getUser().getId().equals(rv.getUser().getId()))
+          .findFirst();
+
+      return ResReviewDTO.builder()
+          .stars(rv.getStars())
+          .image(rv.getUser().getImage())
+          .fullName(rv.getUser().getFullName())
+          .userId(rv.getUser().getId())
+          .comment(ratingComment.map(Comment::getComment).orElse(null))
+          .createdAt(rv.getCreatedAt())
+          .updateAt(rv.getUpdatedAt())
+          .build();
+    }).toList();
+
     Set<ResCategoryInBook> resCategories = book.getCategories().stream()
         .map(c -> {
           ResCategoryInBook x = new ResCategoryInBook();
@@ -261,116 +289,14 @@ public class BookServiceImpl implements BookService {
         .language(book.getLanguage())
         .author(book.getAuthor())
         .status(book.getStatus())
-        .averageRating(avgRating)
-        .ratingCount(ratings.size())
-        .comments(commentDtos)
+        .stars(resFeedBack)
+        .reviews(resReviewDTOs)
+        .comments(commentDTOs)
         .categories(resCategories)
         .createdBy(book.getCreatedBy())
         .updatedBy(book.getUpdatedBy())
         .createdAt(book.getCreatedAt())
         .updatedAt(book.getUpdatedAt())
         .build();
-  }
-
-  @Override
-  @Transactional
-  public void submitReview(long bookId, ReviewRequestDto request, String email) {
-    log.info("Request create review commentId, bookId={}, emailUser={}", bookId, email);
-    User user = userService.getUserByEmail(email);
-    Book book = this.getById(bookId);
-
-    boolean hasRating = request.getStars() != null;
-    boolean hasComment = request.getComment() != null && !request.getComment().isBlank();
-
-    if (!hasRating && !hasComment) {
-      throw new IllegalArgumentException("Must have at least one star rating or comment");
-    }
-
-    if (hasRating) {
-      Rating rating = ratingRepository.findByBookIdAndUserId(bookId, user.getId())
-          .orElse(new Rating());
-
-      rating.setStars(request.getStars());
-      rating.setBook(book);
-      rating.setUser(user);
-
-      ratingRepository.save(rating);
-    }
-
-    if (hasComment) {
-      Comment comment = new Comment();
-      comment.setBook(book);
-      comment.setUser(user);
-      comment.setComment(request.getComment());
-      comment.setRatingComment(hasRating);
-
-      comment = commentRepository.save(comment);
-
-      // 👉 Gửi WebSocket comment sau khi lưu
-      ResCommentDto commentDTO = new ResCommentDto();
-      commentDTO.setId(comment.getId());
-      commentDTO.setEmail(user.getEmail()); // hoặc user.getEmail()
-      commentDTO.setComment(comment.getComment());
-      commentDTO.setCreatedAt(comment.getCreatedAt());
-      commentDTO.setUpdatedAt(comment.getUpdatedAt());
-
-      messagingTemplate.convertAndSend("/topic/comments/" + bookId, commentDTO);
-    }
-  }
-
-  @Override
-  @Transactional
-  public void updateReview(Long commentId, Long ratingId, ReviewRequestDto request, String email) {
-    log.info("Request update review commentId, commentId={}, ratingId={}", commentId, ratingId);
-    User user = userService.getUserByEmail(email);
-
-    if (request.getStars() == null && (request.getComment() == null || request.getComment()
-        .isBlank())) {
-      throw new IllegalArgumentException("Must have at least one star rating or comment");
-    }
-
-    if (request.getStars() != null) {
-      Rating rating = ratingRepository.findByIdAndUserId(ratingId, user.getId()).orElseThrow(() ->
-          new ResourceNotFoundException(
-              "Not found rating with ratingId=" + ratingId + " and userId=" + user.getId()));
-
-      rating.setStars(request.getStars());
-      ratingRepository.save(rating);
-    }
-    if (request.getComment() != null && !request.getComment().isBlank()) {
-      Comment comment = commentRepository.findByIdAndUserId(commentId, user.getId()).orElseThrow(
-          () -> new ResourceNotFoundException(
-              "Not found comment with commentId = " + commentId + " and userId=" + user.getId()));
-      comment.setComment(request.getComment());
-      commentRepository.save(comment);
-    }
-  }
-
-  @Override
-  @Transactional
-  public void deleteReview(Long commentId, Long ratingId, String email) {
-    log.info("Request delete review commentId, commentId={}, ratingId={}", commentId, ratingId);
-    User user = userService.getUserByEmail(email);
-
-    Rating rating = ratingRepository.findByIdAndUserId(ratingId, user.getId()).orElseThrow(() ->
-        new ResourceNotFoundException(
-            "Not found rating with ratingId=" + ratingId + " and userId=" + user.getId()));
-    ratingRepository.delete(rating);
-    if (commentId != null) {
-      Comment comment = commentRepository.findByIdAndUserId(commentId, user.getId()).orElseThrow(
-          () -> new ResourceNotFoundException(
-              "Not found comment with commentId = " + commentId + " and userId=" + user.getId()));
-      commentRepository.delete(comment);
-    }
-  }
-
-  @Override
-  public void deleteComment(Long commentId, String email) {
-    log.info("Request delete only comment, commentId={}", commentId);
-    User user = userService.getUserByEmail(email);
-    Comment comment = commentRepository.findByIdAndUserId(commentId, user.getId()).orElseThrow(
-        () -> new ResourceNotFoundException(
-            "Not found comment with commentId = " + commentId + " and userId=" + user.getId()));
-    commentRepository.delete(comment);
   }
 }

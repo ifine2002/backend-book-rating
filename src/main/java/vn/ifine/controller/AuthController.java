@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -139,10 +140,10 @@ public class AuthController {
         .maxAge(0)
         .build();
     // Clear SecurityContext
-//    SecurityContextHolder.clearContext();
+    SecurityContextHolder.clearContext();
 //
 //    // Create a new empty authentication
-//    SecurityContextHolder.getContext().setAuthentication(null);
+    SecurityContextHolder.getContext().setAuthentication(null);
 //
 
     return ResponseEntity.ok()

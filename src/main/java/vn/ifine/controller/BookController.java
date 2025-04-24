@@ -118,43 +118,4 @@ public class BookController {
         .body(ApiResponse.success("Fetch a book success",
             detailBook));
   }
-
-  @PostMapping("/review/{bookId}")
-  public ResponseEntity<ApiResponse<Void>> uploadPost(@PathVariable @Min(1) long bookId,
-      @RequestBody ReviewRequestDto request, Principal principal) {
-    log.info("Request comment , {}", request.getComment());
-    bookService.submitReview(bookId, request, principal.getName());
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.created("Create comment book success",
-            null));
-  }
-
-  @PutMapping("/update-review")
-  public ResponseEntity<ApiResponse<Void>> updateReview(
-      @RequestParam(required = false) @Min(1) Long commentId,
-      @RequestParam(required = false) @Min(1) Long ratingId,
-      @RequestBody ReviewRequestDto request, Principal principal) {
-    log.info("Request update review, commentId={}, ratingId={}", commentId, ratingId);
-    bookService.updateReview(commentId, ratingId, request, principal.getName());
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Update a review success",
-            null));
-  }
-
-  @DeleteMapping("/review")
-  public ResponseEntity<ApiResponse<Void>> deleteReview(
-      @RequestParam(required = false) @Min(1) Long commentId,
-      @RequestParam @Min(1) Long ratingId, Principal principal) {
-    log.info("Request remove review, commentId={}, ratingId={}", commentId, ratingId);
-    bookService.deleteReview(commentId, ratingId, principal.getName());
-    return ResponseEntity.ok().body(ApiResponse.success("Delete review book success", null));
-  }
-
-  @DeleteMapping("/comment/{commentId}")
-  public ResponseEntity<ApiResponse<Void>> deleteOnlyComment(
-      @PathVariable @Min(1) Long commentId, Principal principal) {
-    log.info("Request remove only comment, commentId={}", commentId);
-    bookService.deleteComment(commentId, principal.getName());
-    return ResponseEntity.ok().body(ApiResponse.success("Delete comment book success", null));
-  }
 }

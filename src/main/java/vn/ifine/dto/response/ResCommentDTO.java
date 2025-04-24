@@ -12,13 +12,17 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResCommentDto {
+public class ResCommentDTO {
 
   private Long id;
 
-  private String comment;
+  private String fullName;
 
-  private String email;
+  private Long userId;
+
+  private String image;
+
+  private String comment;
 
   private Date createdAt;
 

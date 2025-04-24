@@ -34,12 +34,4 @@ public interface BookService {
   ResBook convertToResBook(Book book);
 
   ResDetailBook getBookDetail(long id);
-
-  void submitReview(long bookId, ReviewRequestDto request, String email);
-
-  void updateReview(Long commentId, Long ratingId, ReviewRequestDto request, String email);
-
-  void deleteReview(Long commentId, Long ratingId, String email);
-
-  void deleteComment(Long commentId, String email);
 }
