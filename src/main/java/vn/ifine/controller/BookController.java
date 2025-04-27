@@ -15,15 +15,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.ifine.dto.request.ReqBookDTO;
-import vn.ifine.dto.request.ReviewRequestDto;
 import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResDetailBook;
@@ -103,11 +102,20 @@ public class BookController {
 
   @PostMapping(value = "/upload-post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<ResBook>> uploadPost(
-      @Valid ReqBookDTO reqBookDTO) {
+      @Valid ReqBookDTO reqBookDTO, Principal principal) {
     log.info("Request upload book, {}", reqBookDTO.getName());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created("Create a book success",
-            this.bookService.uploadBook(reqBookDTO)));
+            this.bookService.uploadBook(reqBookDTO, principal.getName())));
+  }
+
+  @GetMapping("/list-none")
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getApproveBooks(
+      @Filter Specification<Book> spec,
+      Pageable pageable) {
+    return ResponseEntity.ok().body(
+        ApiResponse.success("Fetch all book is none success",
+            this.bookService.getApproveBooks(spec, pageable)));
   }
 
   @GetMapping("/detail-book/{id}")
@@ -118,4 +126,21 @@ public class BookController {
         .body(ApiResponse.success("Fetch a book success",
             detailBook));
   }
+
+  @PatchMapping("/approve/{bookId}")
+  public ResponseEntity<ApiResponse<Void>> approveBook(@PathVariable("bookId") @Min(1) Long bookId){
+    bookService.approveBook(bookId);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Approve a book success",
+            null));
+  }
+
+  @PatchMapping("/reject/{bookId}")
+  public ResponseEntity<ApiResponse<Void>> rejectBook(@PathVariable("bookId") @Min(1) Long bookId){
+    bookService.rejectBook(bookId);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Reject a book success",
+            null));
+  }
+
 }

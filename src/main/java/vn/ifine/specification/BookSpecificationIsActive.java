@@ -4,7 +4,7 @@ import org.springframework.data.jpa.domain.Specification;
 import vn.ifine.model.Book;
 import vn.ifine.util.BookStatus;
 
-public class BookSpecification {
+public class BookSpecificationIsActive {
   public static Specification<Book> isActive() {
     return (root, query, criteriaBuilder) ->
         criteriaBuilder.equal(root.get("status"), BookStatus.ACTIVE);

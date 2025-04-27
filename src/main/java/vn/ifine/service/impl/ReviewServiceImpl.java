@@ -1,6 +1,10 @@
 package vn.ifine.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -13,9 +17,10 @@ import vn.ifine.dto.request.ReqCommentDTO;
 import vn.ifine.dto.request.ReqRatingDTO;
 import vn.ifine.dto.request.ReviewRequestDto;
 import vn.ifine.dto.response.ResComment;
-import vn.ifine.dto.response.ResCommentDTO;
 import vn.ifine.dto.response.ResRatingDTO;
+import vn.ifine.dto.response.ResReviewDTO;
 import vn.ifine.dto.response.ResultPaginationDTO;
+import vn.ifine.exception.CustomException;
 import vn.ifine.exception.ResourceAlreadyExistsException;
 import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Book;
@@ -114,6 +119,7 @@ public class ReviewServiceImpl implements ReviewService {
         .comment(request.getComment())
         .book(book)
         .user(user)
+        .isRatingComment(request.isRatingComment())
         .build();
     comment = commentRepository.save(comment);
     log.info("Comment has been created success, commentId={}", comment.getId());
@@ -170,9 +176,18 @@ public class ReviewServiceImpl implements ReviewService {
         .build();
   }
 
+  private void sendReviewNotification(String action, Long bookId, Object data) {
+    Map<String, Object> notification = new HashMap<>();
+    notification.put("action", action);
+    notification.put("data", data);
+    notification.put("timestamp", LocalDateTime.now());
+
+    messagingTemplate.convertAndSend("/topic/reviews/" + bookId, notification);
+  }
+
   @Override
   @Transactional
-  public void submitReview(Long bookId, ReviewRequestDto request, String email) {
+  public void createReview(Long bookId, ReviewRequestDto request, String email) {
     log.info("Request create review commentId, bookId={}, emailUser={}", bookId, email);
     User user = userService.getUserByEmail(email);
     Book book = bookService.getById(bookId);
@@ -180,39 +195,40 @@ public class ReviewServiceImpl implements ReviewService {
     boolean hasRating = request.getStars() != null;
     boolean hasComment = request.getComment() != null && !request.getComment().isBlank();
 
-    if (!hasRating && !hasComment) {
-      throw new IllegalArgumentException("Must have at least one star rating or comment");
+    if (!hasRating) {
+      throw new IllegalArgumentException("Must have at least one star rating");
     }
 
-    if (hasRating) {
-      Rating rating = ratingRepository.findByBookIdAndUserId(bookId, user.getId())
-          .orElse(new Rating());
+    Rating rating = new Rating();
+    rating.setStars(request.getStars());
+    rating.setBook(book);
+    rating.setUser(user);
+    ratingRepository.save(rating);
 
-      rating.setStars(request.getStars());
-      rating.setBook(book);
-      rating.setUser(user);
-
-      ratingRepository.save(rating);
-    }
+    Comment comment = new Comment();
+    comment.setBook(book);
+    comment.setUser(user);
+    comment.setComment(request.getComment());
+    comment.setRatingComment(true);
 
     if (hasComment) {
-      Comment comment = new Comment();
-      comment.setBook(book);
-      comment.setUser(user);
-      comment.setComment(request.getComment());
-      comment.setRatingComment(hasRating);
-
       comment = commentRepository.save(comment);
-
-      // 👉 Gửi WebSocket comment sau khi lưu
-      ResCommentDTO commentDTO = new ResCommentDTO();
-      commentDTO.setId(comment.getId());
-      commentDTO.setComment(comment.getComment());
-      commentDTO.setCreatedAt(comment.getCreatedAt());
-      commentDTO.setUpdatedAt(comment.getUpdatedAt());
-
-      messagingTemplate.convertAndSend("/topic/comments/" + bookId, commentDTO);
     }
+
+    // 👉 Gửi WebSocket comment sau khi lưu
+    ResReviewDTO res = new ResReviewDTO();
+    res.setFullName(user.getFullName());
+    res.setUserId(user.getId());
+    res.setImage(user.getImage());
+    res.setStars(rating.getStars());
+    res.setRatingId(rating.getId());
+    res.setCreatedAt(rating.getCreatedAt());
+    res.setUpdatedAt(rating.getUpdatedAt());
+    if (hasComment) {
+      res.setCommentId(comment.getId());
+      res.setComment(comment.getComment());
+    }
+    sendReviewNotification("create", bookId, res);
   }
 
   @Override
@@ -220,54 +236,96 @@ public class ReviewServiceImpl implements ReviewService {
   public void updateReview(Long commentId, Long ratingId, ReviewRequestDto request, String email) {
     log.info("Request update review commentId, commentId={}, ratingId={}", commentId, ratingId);
     User user = userService.getUserByEmail(email);
-
+    boolean hasComment = request.getComment() != null && !request.getComment().isBlank(); //tồn tại
     if (request.getStars() == null && (request.getComment() == null || request.getComment()
         .isBlank())) {
       throw new IllegalArgumentException("Must have at least one star rating or comment");
     }
 
-    if (request.getStars() != null) {
-      Rating rating = ratingRepository.findByIdAndUserId(ratingId, user.getId()).orElseThrow(() ->
-          new ResourceNotFoundException(
-              "Not found rating with ratingId=" + ratingId + " and userId=" + user.getId()));
+    Rating rating = ratingRepository.findByIdAndUserId(ratingId, user.getId()).orElseThrow(() ->
+        new ResourceNotFoundException(
+            "Not found rating with ratingId=" + ratingId + " and userId=" + user.getId()));
 
-      rating.setStars(request.getStars());
-      ratingRepository.save(rating);
-    }
-    if (request.getComment() != null && !request.getComment().isBlank()) {
-      Comment comment = commentRepository.findByIdAndUserId(commentId, user.getId()).orElseThrow(
+    rating.setStars(request.getStars());
+    ratingRepository.save(rating);
+
+    Comment comment = new Comment();
+
+    if(!hasComment && commentId != null){
+       comment = commentRepository.findByIdAndUserId(commentId, user.getId()).orElseThrow(
           () -> new ResourceNotFoundException(
               "Not found comment with commentId = " + commentId + " and userId=" + user.getId()));
       comment.setComment(request.getComment());
-      commentRepository.save(comment);
+      commentRepository.delete(comment);
+    } else if(hasComment) {
+      comment = commentRepository.findByIdAndUserIdAndIsRatingCommentTrue(commentId, user.getId()).orElse(new Comment());
+      comment.setBook(rating.getBook());
+      comment.setUser(user);
+      comment.setComment(request.getComment());
+      comment.setRatingComment(true);
+
+      comment = commentRepository.save(comment);
     }
+
+    // 👉 Gửi WebSocket comment sau khi lưu
+    ResReviewDTO res = new ResReviewDTO();
+    res.setFullName(user.getFullName());
+    res.setUserId(user.getId());
+    res.setImage(user.getImage());
+    res.setStars(rating.getStars());
+    res.setRatingId(rating.getId());
+    res.setCreatedAt(rating.getCreatedAt());
+    res.setUpdatedAt(rating.getUpdatedAt());
+    if (hasComment) {
+      res.setCommentId(comment.getId());
+      res.setComment(comment.getComment());
+    } else {
+      res.setCommentId(null);
+      res.setComment(null);
+    }
+    sendReviewNotification("update", rating.getBook().getId(), res);
   }
 
   @Override
   @Transactional
   public void deleteReview(Long commentId, Long ratingId, String email) {
-    log.info("Request delete review commentId, commentId={}, ratingId={}", commentId, ratingId);
+    log.info("Request delete review commentId={}, ratingId={}, emailUser={}", commentId, ratingId,
+        email);
     User user = userService.getUserByEmail(email);
 
-    Rating rating = ratingRepository.findByIdAndUserId(ratingId, user.getId()).orElseThrow(() ->
-        new ResourceNotFoundException(
-            "Not found rating with ratingId=" + ratingId + " and userId=" + user.getId()));
-    ratingRepository.delete(rating);
-    if (commentId != null) {
-      Comment comment = commentRepository.findByIdAndUserId(commentId, user.getId()).orElseThrow(
-          () -> new ResourceNotFoundException(
-              "Not found comment with commentId = " + commentId + " and userId=" + user.getId()));
-      commentRepository.delete(comment);
+    // Xóa rating
+    Optional<Rating> ratingOptional = ratingRepository.findById(ratingId);
+    if (ratingOptional.isEmpty()) {
+      throw new ResourceNotFoundException("Rating not found with id: " + ratingId);
     }
-  }
 
-  @Override
-  public void deleteComment(Long commentId, String email) {
-    log.info("Request delete only comment, commentId={}", commentId);
-    User user = userService.getUserByEmail(email);
-    Comment comment = commentRepository.findByIdAndUserId(commentId, user.getId()).orElseThrow(
-        () -> new ResourceNotFoundException(
-            "Not found comment with commentId = " + commentId + " and userId=" + user.getId()));
-    commentRepository.delete(comment);
+    Rating rating = ratingOptional.get();
+    // Kiểm tra quyền xóa (chỉ cho phép người tạo xóa)
+    if (!rating.getUser().getId().equals(user.getId())) {
+      throw new CustomException("You don't have permission to delete this rating");
+    }
+
+    Book book = rating.getBook();
+    Long bookId = book.getId();
+
+    // Xóa comment nếu có
+    if (commentId != null) {
+      Optional<Comment> commentOptional = commentRepository.findById(commentId);
+      if (commentOptional.isPresent()) {
+        Comment comment = commentOptional.get();
+        // Kiểm tra quyền xóa (chỉ cho phép người tạo xóa)
+        if (!comment.getUser().getId().equals(user.getId())) {
+          throw new CustomException("You don't have permission to delete this comment");
+        }
+        commentRepository.delete(comment);
+      }
+    }
+
+    // Xóa rating
+    ratingRepository.delete(rating);
+
+    // Gửi thông báo WebSocket
+    sendReviewNotification("delete", bookId, user.getId());
+
   }
 }

@@ -14,4 +14,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long>, JpaSpec
   List<Comment> findByBookIdAndIsRatingCommentTrue(long bookId);
 
   Optional<Comment> findByIdAndUserId(Long commentId, Long userId);
+
+  Optional<Comment> findByIdAndUserIdAndIsRatingCommentTrue(Long bookId, Long userId);
 }

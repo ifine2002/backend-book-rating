@@ -11,8 +11,6 @@ import vn.ifine.model.Rating;
 public interface RatingRepository extends JpaRepository<Rating, Long>, JpaSpecificationExecutor<Rating> {
   List<Rating> findByBookId(long bookId);
 
-  Optional<Rating> findByBookIdAndUserId(Long bookId, Long userId);
-
   Optional<Rating> findByIdAndUserId(Long ratingId, Long userId);
 
   boolean existsByBookIdAndUserId(Long bookId, Long userId);

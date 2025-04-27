@@ -28,7 +28,6 @@ import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResComment;
 import vn.ifine.dto.response.ResRatingDTO;
 import vn.ifine.dto.response.ResultPaginationDTO;
-import vn.ifine.model.Book;
 import vn.ifine.model.Comment;
 import vn.ifine.model.Rating;
 import vn.ifine.service.ReviewService;
@@ -117,11 +116,11 @@ public class ReviewController {
             this.reviewService.getComments(spec, pageable)));
   }
 
-  @PostMapping("/review/{bookId}")
-  public ResponseEntity<ApiResponse<Void>> uploadPost(@PathVariable @Min(1) long bookId,
+  @PostMapping("/{bookId}")
+  public ResponseEntity<ApiResponse<Void>> createReview(@PathVariable @Min(1) long bookId,
       @RequestBody ReviewRequestDto request, Principal principal) {
     log.info("Request comment , {}", request.getComment());
-    reviewService.submitReview(bookId, request, principal.getName());
+    reviewService.createReview(bookId, request, principal.getName());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created("Create comment book success",
             null));
@@ -139,7 +138,7 @@ public class ReviewController {
             null));
   }
 
-  @DeleteMapping("/review")
+  @DeleteMapping("/")
   public ResponseEntity<ApiResponse<Void>> deleteReview(
       @RequestParam(required = false) @Min(1) Long commentId,
       @RequestParam @Min(1) Long ratingId, Principal principal) {

@@ -5,7 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import vn.ifine.dto.request.ReqBookDTO;
-import vn.ifine.dto.request.ReviewRequestDto;
+import vn.ifine.dto.response.ResAdminBookDTO;
 import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResDetailBook;
 import vn.ifine.dto.response.ResultPaginationDTO;
@@ -17,9 +17,15 @@ public interface BookService {
   ResBook create(ReqBookDTO reqBookDTO);
 
   //user post
-  ResBook uploadBook(ReqBookDTO reqBookDTO);
+  ResBook uploadBook(ReqBookDTO reqBookDTO, String email);
+
+  ResultPaginationDTO getApproveBooks(Specification<Book> spec, Pageable pageable);
 
   ResBook update(long bookId, ReqBookDTO reqBookDTO);
+
+  void approveBook(Long bookId);
+
+  void rejectBook(Long bookId);
 
   Book getById(long id);
 

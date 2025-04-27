@@ -18,6 +18,10 @@ public class ResReviewDTO {
 
   private String image;
 
+  private Long ratingId;
+
+  private Long commentId;
+
   private Long userId;
 
   private Long stars;
@@ -26,6 +30,6 @@ public class ResReviewDTO {
 
   private Date createdAt;
 
-  private Date updateAt;
+  private Date updatedAt;
 
 }

@@ -1,7 +1,9 @@
 package vn.ifine.service.impl;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -10,12 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.ifine.dto.request.ReqBookDTO;
+import vn.ifine.dto.response.ResAdminBookDTO;
 import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResCategoryInBook;
-import vn.ifine.dto.response.ResCommentDTO;
 import vn.ifine.dto.response.ResDetailBook;
 import vn.ifine.dto.response.ResFeedBack;
 import vn.ifine.dto.response.ResReviewDTO;
@@ -25,13 +28,16 @@ import vn.ifine.model.Book;
 import vn.ifine.model.Category;
 import vn.ifine.model.Comment;
 import vn.ifine.model.Rating;
+import vn.ifine.model.User;
 import vn.ifine.repository.BookRepository;
 import vn.ifine.repository.CategoryRepository;
 import vn.ifine.repository.CommentRepository;
 import vn.ifine.repository.RatingRepository;
 import vn.ifine.service.BookService;
 import vn.ifine.service.FileService;
-import vn.ifine.specification.BookSpecification;
+import vn.ifine.service.UserService;
+import vn.ifine.specification.BookSpecificationIsActive;
+import vn.ifine.specification.BookSpecificationIsNone;
 import vn.ifine.util.BookStatus;
 
 @Service
@@ -44,6 +50,8 @@ public class BookServiceImpl implements BookService {
   private final RatingRepository ratingRepository;
   private final CommentRepository commentRepository;
   private final FileService fileService;
+  private final SimpMessagingTemplate messagingTemplate;
+  private final UserService userService;
 
   // for admin
   @Override
@@ -73,7 +81,8 @@ public class BookServiceImpl implements BookService {
   // for user
   @Transactional
   @Override
-  public ResBook uploadBook(ReqBookDTO reqBookDTO) {
+  public ResBook uploadBook(ReqBookDTO reqBookDTO, String email) {
+    User user = userService.getUserByEmail(email);
     Book book = Book.builder()
         .name(reqBookDTO.getName())
         .description(reqBookDTO.getDescription())
@@ -91,8 +100,65 @@ public class BookServiceImpl implements BookService {
       book.setCategories(categoriesDB);
     }
     bookRepository.save(book);
+
+    ResAdminBookDTO adminBook = this.convertToResAdminBook(book, user);
+
+    this.sendAdminBookNotification("create", adminBook);
+
     log.info("User upload book success, bookId={}", book.getId());
     return this.convertToResBook(book);
+  }
+
+  private ResAdminBookDTO convertToResAdminBook(Book book, User user) {
+    Set<ResCategoryInBook> resCategories = book.getCategories().stream()
+        .map(c -> {
+          ResCategoryInBook x = new ResCategoryInBook();
+          x.setId(c.getId());
+          x.setName(c.getName());
+          return x;
+        })
+        .collect(Collectors.toSet());
+
+    return ResAdminBookDTO.builder()
+        .bookId(book.getId())
+        .bookName(book.getName())
+        .description(book.getDescription())
+        .publishedDate(book.getPublishedDate())
+        .bookFormat(book.getBookFormat())
+        .bookSaleLink(book.getBookSaleLink())
+        .language(book.getLanguage())
+        .imageBook(book.getImage())
+        .author(book.getAuthor())
+        .categories(resCategories)
+        .userId(user.getId())
+        .fullName(user.getFullName())
+        .avatar(user.getImage())
+        .createdAt(book.getCreatedAt())
+        .build();
+  }
+
+  @Override
+  public ResultPaginationDTO getApproveBooks(Specification<Book> spec, Pageable pageable) {
+    // Kết hợp điều kiện isNone với các điều kiện khác
+    Specification<Book> activeSpec = BookSpecificationIsNone.withFilter(spec);
+
+    Page<Book> pageBook = bookRepository.findAll(activeSpec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+    rs.setTotalPages(pageBook.getTotalPages());
+    rs.setTotalElements(pageBook.getTotalElements());
+    // convert data
+    List<ResAdminBookDTO> listBook = pageBook.getContent()
+        .stream().map(book -> {
+          User user = userService.getUserByEmail(book.getCreatedBy());
+          return this.convertToResAdminBook(book, user);
+        })
+        .toList();
+
+    rs.setResult(listBook);
+    return rs;
   }
 
   // admin
@@ -125,6 +191,33 @@ public class BookServiceImpl implements BookService {
     bookRepository.save(book);
     log.info("Update book success, bookId={}", book.getId());
     return this.convertToResBook(book);
+  }
+
+  private void sendAdminBookNotification(String action, Object data) {
+    Map<String, Object> notification = new HashMap<>();
+    notification.put("action", action);
+    notification.put("data", data);
+    notification.put("timestamp", LocalDateTime.now());
+
+    messagingTemplate.convertAndSend("/topic/admin-books", notification);
+  }
+
+  @Override
+  public void approveBook(Long bookId) {
+    Book book = this.getById(bookId);
+    book.setStatus(BookStatus.ACTIVE);
+
+    bookRepository.save(book);
+    this.sendAdminBookNotification("approve", null);
+  }
+
+  @Override
+  public void rejectBook(Long bookId) {
+    Book book = this.getById(bookId);
+    book.setStatus(BookStatus.INACTIVE);
+
+    bookRepository.save(book);
+    this.sendAdminBookNotification("reject", null);
   }
 
   @Override
@@ -166,7 +259,7 @@ public class BookServiceImpl implements BookService {
   @Override
   public ResultPaginationDTO getAllActive(Specification<Book> spec, Pageable pageable) {
     // Kết hợp điều kiện isActive với các điều kiện khác
-    Specification<Book> activeSpec = BookSpecification.withFilter(spec);
+    Specification<Book> activeSpec = BookSpecificationIsActive.withFilter(spec);
 
     Page<Book> pageBook = bookRepository.findAll(activeSpec, pageable);
     ResultPaginationDTO rs = new ResultPaginationDTO();
@@ -238,19 +331,6 @@ public class BookServiceImpl implements BookService {
     resFeedBack.setTotalFourStar(ratingRepository.countByBookIdAndStars(id, 4));
     resFeedBack.setTotalFiveStar(ratingRepository.countByBookIdAndStars(id, 5));
 
-    List<Comment> comments = commentRepository.findByBookIdAndIsRatingCommentFalseOrderByUpdatedAtDesc(id);
-    List<ResCommentDTO> commentDTOs = comments.stream()
-        .map(c -> ResCommentDTO.builder()
-            .id(c.getId())
-            .fullName(c.getUser().getFullName())
-            .userId(c.getUser().getId())
-            .image(c.getUser().getImage())
-            .comment(c.getComment())
-            .createdAt(c.getCreatedAt())
-            .updatedAt(c.getUpdatedAt())
-            .build())
-        .toList();
-
     List<Comment> commentReview = commentRepository.findByBookIdAndIsRatingCommentTrue(id);
 
     List<ResReviewDTO> resReviewDTOs = ratings.stream().map(rv -> {
@@ -261,12 +341,14 @@ public class BookServiceImpl implements BookService {
 
       return ResReviewDTO.builder()
           .stars(rv.getStars())
+          .ratingId(rv.getId())
+          .commentId(ratingComment.map(Comment::getId).orElse(null))
           .image(rv.getUser().getImage())
           .fullName(rv.getUser().getFullName())
           .userId(rv.getUser().getId())
           .comment(ratingComment.map(Comment::getComment).orElse(null))
           .createdAt(rv.getCreatedAt())
-          .updateAt(rv.getUpdatedAt())
+          .updatedAt(rv.getUpdatedAt())
           .build();
     }).toList();
 
@@ -291,7 +373,6 @@ public class BookServiceImpl implements BookService {
         .status(book.getStatus())
         .stars(resFeedBack)
         .reviews(resReviewDTOs)
-        .comments(commentDTOs)
         .categories(resCategories)
         .createdBy(book.getCreatedBy())
         .updatedBy(book.getUpdatedBy())

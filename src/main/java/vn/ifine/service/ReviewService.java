@@ -32,11 +32,10 @@ public interface ReviewService {
 
   ResultPaginationDTO getComments(Specification<Comment> spec, Pageable pageable);
 
-  void submitReview(Long bookId, ReviewRequestDto request, String email);
+  void createReview(Long bookId, ReviewRequestDto request, String email);
 
   void updateReview(Long commentId, Long ratingId, ReviewRequestDto request, String email);
 
   void deleteReview(Long commentId, Long ratingId, String email);
 
-  void deleteComment(Long commentId, String email);
 }
