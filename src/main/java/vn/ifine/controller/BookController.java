@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.ifine.dto.request.ReqBookDTO;
 import vn.ifine.dto.response.ApiResponse;
+import vn.ifine.dto.response.ResAdminBookDTO;
 import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResDetailBook;
 import vn.ifine.dto.response.ResultPaginationDTO;
@@ -101,7 +102,7 @@ public class BookController {
   }
 
   @PostMapping(value = "/upload-post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<ApiResponse<ResBook>> uploadPost(
+  public ResponseEntity<ApiResponse<ResAdminBookDTO>> uploadPost(
       @Valid ReqBookDTO reqBookDTO, Principal principal) {
     log.info("Request upload book, {}", reqBookDTO.getName());
     return ResponseEntity.status(HttpStatus.CREATED)

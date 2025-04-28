@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -122,6 +123,22 @@ public class GlobalException {
     return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
   }
 
+  @ExceptionHandler(value = {MethodArgumentTypeMismatchException.class})
+  @ResponseStatus(BAD_REQUEST)
+  public ResponseEntity<ErrorResponse<Object>> handleMethodArgumentTypeMismatchException(
+      MethodArgumentTypeMismatchException ex, WebRequest request) {
+    log.error("Exception caught: ", ex);  // Log toàn bộ stack trace
+    ErrorResponse<Object> errorResponse = ErrorResponse.builder()
+        .timestamp(new Date())
+        .status(BAD_REQUEST.value())
+        .error("Incorrect data type")
+        .message(ex.getMessage())
+        .path(request.getDescription(false).replace("uri=", ""))
+        .build();
+
+    return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
+  }
+
   @ExceptionHandler(value = {InvalidTokenException.class, UsernameNotFoundException.class,
       BadCredentialsException.class, CustomException.class})
   @ResponseStatus(BAD_REQUEST)
@@ -160,11 +177,11 @@ public class GlobalException {
   public ResponseEntity<ErrorResponse<Object>> handleAllUncaughtException(
       Exception ex,
       WebRequest request) {
-    log.error("Unknown error occurred", ex);
+    log.error("Internal Server Error", ex);
     ErrorResponse<Object> errorResponse = ErrorResponse.builder()
         .timestamp(new Date())
         .status(INTERNAL_SERVER_ERROR.value())
-        .error("Unknown error occurred")
+        .error("Internal Server Error")
         .message(ex.getMessage())
         .path(request.getDescription(false).replace("uri=", ""))
         .build();

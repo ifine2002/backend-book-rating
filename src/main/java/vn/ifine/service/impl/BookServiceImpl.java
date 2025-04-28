@@ -82,7 +82,7 @@ public class BookServiceImpl implements BookService {
   // for user
   @Transactional
   @Override
-  public ResBook uploadBook(ReqBookDTO reqBookDTO, String email) {
+  public ResAdminBookDTO uploadBook(ReqBookDTO reqBookDTO, String email) {
     User user = userService.getUserByEmail(email);
     Book book = Book.builder()
         .name(reqBookDTO.getName())
@@ -107,7 +107,7 @@ public class BookServiceImpl implements BookService {
     this.sendAdminBookNotification("create", adminBook);
 
     log.info("User upload book success, bookId={}", book.getId());
-    return this.convertToResBook(book);
+    return adminBook;
   }
 
   private ResAdminBookDTO convertToResAdminBook(Book book, User user) {

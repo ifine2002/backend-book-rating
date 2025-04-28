@@ -17,7 +17,7 @@ public interface BookService {
   ResBook create(ReqBookDTO reqBookDTO);
 
   //user post
-  ResBook uploadBook(ReqBookDTO reqBookDTO, String email);
+  ResAdminBookDTO uploadBook(ReqBookDTO reqBookDTO, String email);
 
   ResultPaginationDTO getApproveBooks(Specification<Book> spec, Pageable pageable);
 
