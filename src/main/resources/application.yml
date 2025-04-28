@@ -34,6 +34,10 @@ spring:
           auth: true
           starttls:
             enable: true
+  data:
+    web:
+      pageable:
+        default-page-size: 10
 
 jwt:
   access-token: TRrx3ZoD9xgevlM73MU8/ay9VO+8RJ7NjvFh8Ab0xoTsKzuPYwCOKDZugGYsVxroYRfP94DH6jBxBhFyBPaQQQ==

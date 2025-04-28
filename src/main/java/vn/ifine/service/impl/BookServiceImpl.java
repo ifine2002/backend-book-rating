@@ -21,6 +21,7 @@ import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResCategoryInBook;
 import vn.ifine.dto.response.ResDetailBook;
 import vn.ifine.dto.response.ResFeedBack;
+import vn.ifine.dto.response.ResPost;
 import vn.ifine.dto.response.ResReviewDTO;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.exception.ResourceNotFoundException;
@@ -134,6 +135,9 @@ public class BookServiceImpl implements BookService {
         .fullName(user.getFullName())
         .avatar(user.getImage())
         .createdAt(book.getCreatedAt())
+        .updatedAt(book.getUpdatedAt())
+        .createdBy(book.getCreatedBy())
+        .updatedBy(book.getUpdatedBy())
         .build();
   }
 
@@ -208,7 +212,7 @@ public class BookServiceImpl implements BookService {
     book.setStatus(BookStatus.ACTIVE);
 
     bookRepository.save(book);
-    this.sendAdminBookNotification("approve", null);
+    this.sendAdminBookNotification("approve", this.convertToResPost(book));
   }
 
   @Override
@@ -257,7 +261,7 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public ResultPaginationDTO getAllActive(Specification<Book> spec, Pageable pageable) {
+  public ResultPaginationDTO getHomeBook(Specification<Book> spec, Pageable pageable) {
     // Kết hợp điều kiện isActive với các điều kiện khác
     Specification<Book> activeSpec = BookSpecificationIsActive.withFilter(spec);
 
@@ -269,8 +273,8 @@ public class BookServiceImpl implements BookService {
     rs.setTotalPages(pageBook.getTotalPages());
     rs.setTotalElements(pageBook.getTotalElements());
     // convert data
-    List<ResBook> listBook = pageBook.getContent()
-        .stream().map(this::convertToResBook)
+    List<ResPost> listBook = pageBook.getContent()
+        .stream().map(this::convertToResPost)
         .toList();
 
     rs.setResult(listBook);
@@ -314,10 +318,10 @@ public class BookServiceImpl implements BookService {
         .build();
   }
 
-  @Override
-  public ResDetailBook getBookDetail(long id) {
-    Book book = this.getById(id);
-    List<Rating> ratings = ratingRepository.findByBookId(id);
+  private ResPost convertToResPost(Book book) {
+    User user = userService.getUserByEmail(book.getCreatedBy());
+    List<Rating> ratings = ratingRepository.findByBookId(book.getId());
+
     double avgRating = ratings.stream()
         .mapToLong(Rating::getStars)
         .average()
@@ -325,13 +329,21 @@ public class BookServiceImpl implements BookService {
     ResFeedBack resFeedBack = new ResFeedBack();
     resFeedBack.setAverageRating(avgRating);
     resFeedBack.setRatingCount(ratings.size());
-    resFeedBack.setTotalOneStar(ratingRepository.countByBookIdAndStars(id, 1));
-    resFeedBack.setTotalTwoStar(ratingRepository.countByBookIdAndStars(id, 2));
-    resFeedBack.setTotalThreeStar(ratingRepository.countByBookIdAndStars(id, 3));
-    resFeedBack.setTotalFourStar(ratingRepository.countByBookIdAndStars(id, 4));
-    resFeedBack.setTotalFiveStar(ratingRepository.countByBookIdAndStars(id, 5));
-
-    List<Comment> commentReview = commentRepository.findByBookIdAndIsRatingCommentTrue(id);
+    resFeedBack.setTotalOneStar(ratingRepository.countByBookIdAndStars(book.getId(), 1));
+    resFeedBack.setTotalTwoStar(ratingRepository.countByBookIdAndStars(book.getId(), 2));
+    resFeedBack.setTotalThreeStar(ratingRepository.countByBookIdAndStars(book.getId(), 3));
+    resFeedBack.setTotalFourStar(ratingRepository.countByBookIdAndStars(book.getId(), 4));
+    resFeedBack.setTotalFiveStar(ratingRepository.countByBookIdAndStars(book.getId(), 5));
+    Set<ResCategoryInBook> resCategories = book.getCategories().stream()
+        .map(c -> {
+          ResCategoryInBook x = new ResCategoryInBook();
+          x.setId(c.getId());
+          x.setName(c.getName());
+          return x;
+        })
+        .collect(Collectors.toSet());
+    List<Comment> commentReview = commentRepository.findByBookIdAndIsRatingCommentTrue(
+        book.getId());
 
     List<ResReviewDTO> resReviewDTOs = ratings.stream().map(rv -> {
       // Tìm comment tương ứng với rating (dựa trên userId)
@@ -352,6 +364,47 @@ public class BookServiceImpl implements BookService {
           .build();
     }).toList();
 
+    return ResPost.builder()
+        .bookId(book.getId())
+        .name(book.getName())
+        .description(book.getDescription())
+        .bookImage(book.getImage())
+        .publishedDate(book.getPublishedDate())
+        .bookFormat(book.getBookFormat())
+        .bookSaleLink(book.getBookSaleLink())
+        .language(book.getLanguage())
+        .author(book.getAuthor())
+        .status(book.getStatus())
+        .stars(resFeedBack)
+        .reviews(resReviewDTOs)
+        .categories(resCategories)
+        .userId(user.getId())
+        .fullName(user.getFullName())
+        .avatar(user.getImage())
+        .createdBy(book.getCreatedBy())
+        .updatedBy(book.getUpdatedBy())
+        .createdAt(book.getCreatedAt())
+        .updatedAt(book.getUpdatedAt())
+        .build();
+  }
+
+  @Override
+  public ResDetailBook getBookDetail(long id) {
+    Book book = bookRepository.findByIdAndStatus(id, BookStatus.ACTIVE)
+        .orElseThrow(() -> new ResourceNotFoundException("Not found book"));
+    List<Rating> ratings = ratingRepository.findByBookId(id);
+    double avgRating = ratings.stream()
+        .mapToLong(Rating::getStars)
+        .average()
+        .orElse(0.0);
+    ResFeedBack resFeedBack = new ResFeedBack();
+    resFeedBack.setAverageRating(avgRating);
+    resFeedBack.setRatingCount(ratings.size());
+    resFeedBack.setTotalOneStar(ratingRepository.countByBookIdAndStars(id, 1));
+    resFeedBack.setTotalTwoStar(ratingRepository.countByBookIdAndStars(id, 2));
+    resFeedBack.setTotalThreeStar(ratingRepository.countByBookIdAndStars(id, 3));
+    resFeedBack.setTotalFourStar(ratingRepository.countByBookIdAndStars(id, 4));
+    resFeedBack.setTotalFiveStar(ratingRepository.countByBookIdAndStars(id, 5));
     Set<ResCategoryInBook> resCategories = book.getCategories().stream()
         .map(c -> {
           ResCategoryInBook x = new ResCategoryInBook();
@@ -360,6 +413,26 @@ public class BookServiceImpl implements BookService {
           return x;
         })
         .collect(Collectors.toSet());
+    List<Comment> commentReview = commentRepository.findByBookIdAndIsRatingCommentTrue(id);
+
+    List<ResReviewDTO> resReviewDTOs = ratings.stream().map(rv -> {
+      // Tìm comment tương ứng với rating (dựa trên userId)
+      Optional<Comment> ratingComment = commentReview.stream()
+          .filter(comment -> comment.getUser().getId().equals(rv.getUser().getId()))
+          .findFirst();
+
+      return ResReviewDTO.builder()
+          .stars(rv.getStars())
+          .ratingId(rv.getId())
+          .commentId(ratingComment.map(Comment::getId).orElse(null))
+          .image(rv.getUser().getImage())
+          .fullName(rv.getUser().getFullName())
+          .userId(rv.getUser().getId())
+          .comment(ratingComment.map(Comment::getComment).orElse(null))
+          .createdAt(rv.getCreatedAt())
+          .updatedAt(rv.getUpdatedAt())
+          .build();
+    }).toList();
     return ResDetailBook.builder()
         .id(book.getId())
         .name(book.getName())

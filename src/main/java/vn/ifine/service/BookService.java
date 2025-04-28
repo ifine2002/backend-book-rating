@@ -33,7 +33,7 @@ public interface BookService {
 
   ResultPaginationDTO getAll(Specification<Book> spec, Pageable pageable);
 
-  ResultPaginationDTO getAllActive(Specification<Book> spec, Pageable pageable);
+  ResultPaginationDTO getHomeBook(Specification<Book> spec, Pageable pageable);
 
   List<ResBook> getAllBookOfUser(String email);
 

@@ -84,13 +84,13 @@ public class BookController {
             this.bookService.getAll(spec, pageable)));
   }
 
-  @GetMapping("/list-active")
-  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getActiveBook(
+  @GetMapping("/home-page")
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getHomeBook(
       @Filter Specification<Book> spec,
       Pageable pageable) {
     return ResponseEntity.ok().body(
-        ApiResponse.success("Fetch all book active success",
-            this.bookService.getAllActive(spec, pageable)));
+        ApiResponse.success("Fetch home book success",
+            this.bookService.getHomeBook(spec, pageable)));
   }
 
   @GetMapping("/list-book-user")
