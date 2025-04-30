@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.ifine.dto.request.ReqBookDTO;
 import vn.ifine.dto.response.ResAdminBookDTO;
 import vn.ifine.dto.response.ResBook;
+import vn.ifine.dto.response.ResBookSearch;
 import vn.ifine.dto.response.ResCategoryInBook;
 import vn.ifine.dto.response.ResDetailBook;
 import vn.ifine.dto.response.ResFeedBack;
@@ -37,8 +38,7 @@ import vn.ifine.repository.RatingRepository;
 import vn.ifine.service.BookService;
 import vn.ifine.service.FileService;
 import vn.ifine.service.UserService;
-import vn.ifine.specification.BookSpecificationIsActive;
-import vn.ifine.specification.BookSpecificationIsNone;
+import vn.ifine.specification.BookSpecification;
 import vn.ifine.util.BookStatus;
 
 @Service
@@ -144,7 +144,7 @@ public class BookServiceImpl implements BookService {
   @Override
   public ResultPaginationDTO getApproveBooks(Specification<Book> spec, Pageable pageable) {
     // Kết hợp điều kiện isNone với các điều kiện khác
-    Specification<Book> activeSpec = BookSpecificationIsNone.withFilter(spec);
+    Specification<Book> activeSpec = BookSpecification.noneWithFilter(spec);
 
     Page<Book> pageBook = bookRepository.findAll(activeSpec, pageable);
     ResultPaginationDTO rs = new ResultPaginationDTO();
@@ -263,7 +263,7 @@ public class BookServiceImpl implements BookService {
   @Override
   public ResultPaginationDTO getHomeBook(Specification<Book> spec, Pageable pageable) {
     // Kết hợp điều kiện isActive với các điều kiện khác
-    Specification<Book> activeSpec = BookSpecificationIsActive.withFilter(spec);
+    Specification<Book> activeSpec = BookSpecification.activeWithFilter(spec);
 
     Page<Book> pageBook = bookRepository.findAll(activeSpec, pageable);
     ResultPaginationDTO rs = new ResultPaginationDTO();
@@ -452,5 +452,44 @@ public class BookServiceImpl implements BookService {
         .createdAt(book.getCreatedAt())
         .updatedAt(book.getUpdatedAt())
         .build();
+  }
+
+  private ResBookSearch convertToResBookSearch(Book book){
+    List<Rating> ratings = ratingRepository.findByBookId(book.getId());
+
+    double avgRating = ratings.stream()
+        .mapToLong(Rating::getStars)
+        .average()
+        .orElse(0.0);
+
+    return ResBookSearch.builder()
+        .id(book.getId())
+        .name(book.getName())
+        .author(book.getAuthor())
+        .image(book.getImage())
+        .averageRating(avgRating)
+        .ratingCount(ratings.size())
+        .publishedDate(book.getPublishedDate())
+        .build();
+  }
+
+  @Override
+  public ResultPaginationDTO searchHome(Pageable pageable, String keyword) {
+    Specification<Book> spec = BookSpecification.search(keyword);
+
+    Page<Book> pageBook = bookRepository.findAll(spec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+    rs.setTotalPages(pageBook.getTotalPages());
+    rs.setTotalElements(pageBook.getTotalElements());
+    // convert data
+    List<ResBookSearch> listBook = pageBook.getContent()
+        .stream().map(this::convertToResBookSearch)
+        .toList();
+
+    rs.setResult(listBook);
+    return rs;
   }
 }

@@ -45,4 +45,6 @@ public interface UserService {
   UserResponse changeInfo(String email, ReqChangeInfo request);
 
   ResUserDetail getUserDetail(Long userId);
+
+  ResultPaginationDTO searchUser(Pageable pageable, String keyword);
 }

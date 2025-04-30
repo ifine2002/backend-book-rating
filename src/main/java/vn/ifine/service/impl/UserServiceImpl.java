@@ -13,12 +13,15 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
+import vn.ifine.dto.response.ResBookSearch;
 import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResUserFollow;
+import vn.ifine.dto.response.ResUserSearch;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
 import vn.ifine.exception.ResourceAlreadyExistsException;
 import vn.ifine.exception.ResourceNotFoundException;
+import vn.ifine.model.Book;
 import vn.ifine.model.Follow;
 import vn.ifine.model.Role;
 import vn.ifine.model.User;
@@ -28,6 +31,7 @@ import vn.ifine.service.FileService;
 import vn.ifine.service.FollowService;
 import vn.ifine.service.RoleService;
 import vn.ifine.service.UserService;
+import vn.ifine.specification.BookSpecification;
 import vn.ifine.specification.UserSpecification;
 import vn.ifine.util.UserStatus;
 
@@ -35,6 +39,8 @@ import vn.ifine.util.UserStatus;
 @RequiredArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
+
+
 
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
@@ -264,5 +270,34 @@ public class UserServiceImpl implements UserService {
     userRepository.save(user);
 
     return this.convertToUserResponse(user);
+  }
+
+  private ResUserSearch convertToResUserSearch(User user){
+    return ResUserSearch.builder()
+        .id(user.getId())
+        .fullName(user.getFullName())
+        .image(user.getImage())
+        .address(user.getAddress())
+        .build();
+  }
+
+  @Override
+  public ResultPaginationDTO searchUser(Pageable pageable, String keyword) {
+    Specification<User> spec = UserSpecification.search(keyword);
+
+    Page<User> pageUser = userRepository.findAll(spec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+    rs.setTotalPages(pageUser.getTotalPages());
+    rs.setTotalElements(pageUser.getTotalElements());
+    // convert data
+    List<ResUserSearch> listUser = pageUser.getContent()
+        .stream().map(this::convertToResUserSearch)
+        .toList();
+
+    rs.setResult(listUser);
+    return rs;
   }
 }

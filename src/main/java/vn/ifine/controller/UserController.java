@@ -158,5 +158,11 @@ public class UserController {
             this.userService.updateAvatar(file, principal.getName())));
   }
 
-
+  @GetMapping("/search")
+  public ResponseEntity<ApiResponse<?>> searchPage(@RequestParam String keyword, Pageable pageable) {
+    log.info("Request search user in search page, keyword={}", keyword);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Search user success",
+            userService.searchUser(pageable, keyword)));
+  }
 }

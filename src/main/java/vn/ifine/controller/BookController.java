@@ -144,4 +144,11 @@ public class BookController {
             null));
   }
 
+  @GetMapping("/search")
+  public ResponseEntity<ApiResponse<?>> searchHome(@RequestParam String keyword, Pageable pageable) {
+    log.info("Request search book in home page, keyword={}", keyword);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Search book success",
+            bookService.searchHome(pageable, keyword)));
+  }
 }
