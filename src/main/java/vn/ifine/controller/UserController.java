@@ -75,6 +75,16 @@ public class UserController {
             resUser));
   }
 
+
+  @GetMapping("/profile/{id}")
+  public ResponseEntity<ApiResponse<?>> getProfileUser(@PathVariable @Min(1) Long id) {
+    log.info("Request get profile user, id={}", id);
+    // check exist by id
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Get user detail success",
+            userService.getInfoUser(id)));
+  }
+
   @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<UserResponse>> update(@PathVariable @Min(1) long id,
       @Valid ReqUpdateUser request) {

@@ -9,6 +9,7 @@ import vn.ifine.dto.response.ResAdminBookDTO;
 import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResBookSearch;
 import vn.ifine.dto.response.ResDetailBook;
+import vn.ifine.dto.response.ResPost;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.model.Book;
 
@@ -36,11 +37,13 @@ public interface BookService {
 
   ResultPaginationDTO getHomeBook(Specification<Book> spec, Pageable pageable);
 
-  List<ResBook> getAllBookOfUser(String email);
+  ResultPaginationDTO getAllPostOfUser(String email, Pageable pageable);
 
   ResBook convertToResBook(Book book);
 
   ResDetailBook getBookDetail(long id);
 
   ResultPaginationDTO searchHome(Pageable pageable, String keyword);
+
+  ResPost getPostById(Long bookId);
 }

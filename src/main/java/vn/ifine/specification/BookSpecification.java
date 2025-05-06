@@ -50,4 +50,19 @@ public class BookSpecification {
       return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     };
   }
+
+  public static Specification<Book> hasCreatedBy(String email) {
+    return (root, query, criteriaBuilder) -> {
+      if (email == null || email.trim().isEmpty()) {
+        return criteriaBuilder.conjunction(); // TRUE
+      }
+      return criteriaBuilder.equal(root.get("createdBy"), email);
+    };
+  }
+
+  // Kết hợp cả 2 điều kiện
+  public static Specification<Book> activeByCreator(String email) {
+    return Specification.where(isActive()).and(hasCreatedBy(email));
+  }
+
 }

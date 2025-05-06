@@ -14,6 +14,8 @@ import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ResBookSearch;
+import vn.ifine.dto.response.ResInfoUser;
+import vn.ifine.dto.response.ResInfoUser.UserFollow;
 import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResUserSearch;
@@ -40,8 +42,6 @@ import vn.ifine.util.UserStatus;
 @Service
 public class UserServiceImpl implements UserService {
 
-
-
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final RoleService roleService;
@@ -55,6 +55,34 @@ public class UserServiceImpl implements UserService {
     return user;
   }
 
+
+  // for client
+  @Override
+  public ResInfoUser getInfoUser(Long id) {
+    User user = this.getById(id);
+    List<Follow> followers = followRepository.findByFollowingId(id);
+    List<UserFollow> listFollowers = followers.stream().map(x -> {
+      User follower = x.getFollower();
+      return new UserFollow(follower.getId(), follower.getFullName(), follower.getImage());
+    }).toList();
+
+    List<Follow> followings = followRepository.findByFollowerId(id);
+    List<UserFollow> listFollowings = followers.stream().map(x -> {
+      User following = x.getFollower();
+      return new UserFollow(following.getId(), following.getFullName(), following.getImage());
+    }).toList();
+
+    return ResInfoUser.builder()
+        .id(user.getId())
+        .fullName(user.getFullName())
+        .email(user.getEmail())
+        .image(user.getImage())
+        .follower(listFollowers)
+        .following(listFollowings)
+        .build();
+  }
+
+  // for admin
   @Override
   public ResUserDetail getUserDetail(Long userId) {
     User user = userRepository.findById(userId)

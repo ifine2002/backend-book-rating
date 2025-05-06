@@ -326,6 +326,5 @@ public class ReviewServiceImpl implements ReviewService {
 
     // Gửi thông báo WebSocket
     sendReviewNotification("delete", bookId, user.getId());
-
   }
 }

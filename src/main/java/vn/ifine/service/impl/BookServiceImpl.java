@@ -46,6 +46,8 @@ import vn.ifine.util.BookStatus;
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
 
+
+
   private final BookRepository bookRepository;
   private final CategoryRepository categoryRepository;
   private final RatingRepository ratingRepository;
@@ -282,10 +284,29 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public List<ResBook> getAllBookOfUser(String email) {
-    List<Book> list = bookRepository.findByCreatedBy(email);
-    List<ResBook> res = list.stream().map(this::convertToResBook).toList();
-    return res;
+  public ResultPaginationDTO getAllPostOfUser(String email, Pageable pageable) {
+    Specification<Book> spec = BookSpecification.activeByCreator(email);
+
+    Page<Book> pageBook = bookRepository.findAll(spec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+    rs.setTotalPages(pageBook.getTotalPages());
+    rs.setTotalElements(pageBook.getTotalElements());
+    // convert data
+    List<ResPost> listBook = pageBook.getContent()
+        .stream().map(this::convertToResPost)
+        .toList();
+
+    rs.setResult(listBook);
+    return rs;
+  }
+
+  @Override
+  public ResPost getPostById(Long bookId) {
+    Book book = this.getById(bookId);
+    return this.convertToResPost(book);
   }
 
   @Override
@@ -364,6 +385,8 @@ public class BookServiceImpl implements BookService {
           .build();
     }).toList();
 
+    ResPost.User userBook = new ResPost.User(user.getId(), user.getFullName(), user.getImage());
+
     return ResPost.builder()
         .bookId(book.getId())
         .name(book.getName())
@@ -378,9 +401,7 @@ public class BookServiceImpl implements BookService {
         .stars(resFeedBack)
         .reviews(resReviewDTOs)
         .categories(resCategories)
-        .userId(user.getId())
-        .fullName(user.getFullName())
-        .avatar(user.getImage())
+        .user(userBook)
         .createdBy(book.getCreatedBy())
         .updatedBy(book.getUpdatedBy())
         .createdAt(book.getCreatedAt())

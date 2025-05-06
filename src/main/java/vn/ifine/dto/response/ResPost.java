@@ -28,17 +28,20 @@ public class ResPost {
   private String author;
   private BookStatus status;
   private Set<ResCategoryInBook> categories;
-
   private ResFeedBack stars;
-
   private List<ResReviewDTO> reviews;
-
-  private Long userId;
-  private String fullName;
-  private String avatar;
+  private User user;
   private String createdBy;
   private String updatedBy;
   private Date createdAt;
   private Date updatedAt;
 
+  @Setter
+  @Getter
+  @AllArgsConstructor
+  public static class User {
+    private Long id;
+    private String fullName;
+    private String image;
+  }
 }

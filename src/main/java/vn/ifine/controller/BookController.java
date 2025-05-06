@@ -27,6 +27,7 @@ import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResAdminBookDTO;
 import vn.ifine.dto.response.ResBook;
 import vn.ifine.dto.response.ResDetailBook;
+import vn.ifine.dto.response.ResPost;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.model.Book;
 import vn.ifine.service.BookService;
@@ -94,11 +95,19 @@ public class BookController {
             this.bookService.getHomeBook(spec, pageable)));
   }
 
+  @GetMapping("/detail-post/{id}")
+  public ResponseEntity<ApiResponse<ResPost>> getPostById(@PathVariable @Min(1) long id) {
+    log.info("Request get post, bookId={}", id);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Fetch a post success",
+            bookService.getPostById(id)));
+  }
+
   @GetMapping("/list-book-user")
-  public ResponseEntity<ApiResponse<?>> getAllBookOfUser(@RequestParam String email) {
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getAllPostOfUser(@RequestParam String email, Pageable pageable) {
     return ResponseEntity.ok().body(
-        ApiResponse.success("Fetch all book active success",
-            this.bookService.getAllBookOfUser(email)));
+        ApiResponse.success("Fetch all post of user success",
+            this.bookService.getAllPostOfUser(email, pageable)));
   }
 
   @PostMapping(value = "/upload-post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

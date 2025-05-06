@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
+import vn.ifine.dto.response.ResInfoUser;
 import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
@@ -47,4 +48,6 @@ public interface UserService {
   ResUserDetail getUserDetail(Long userId);
 
   ResultPaginationDTO searchUser(Pageable pageable, String keyword);
+
+  ResInfoUser getInfoUser(Long id);
 }

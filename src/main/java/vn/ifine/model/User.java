@@ -63,12 +63,4 @@ public class User extends AbstractModel<Long> {
   @ManyToOne
   @JoinColumn(name = "role_id")
   private Role role;
-
-  // Danh sách người mà user này theo dõi
-  @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-  private List<Follow> followings;
-
-  // Danh sách người đang theo dõi user này
-  @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-  private List<Follow> followers;
 }
