@@ -68,4 +68,14 @@ public class FollowController {
         ApiResponse.success("Fetch all follow success",
             this.followService.getFollows(spec, pageable)));
   }
+
+  // Lấy danh sách user bạn đang follow
+  @GetMapping("/list-following")
+  public ResponseEntity<ApiResponse<?>> getListFollowing(
+      Principal principal, @Filter Specification<Follow> spec,
+      Pageable pageable) {
+    return ResponseEntity.ok().body(
+        ApiResponse.success("Get list following success",
+            this.followService.getListFollowing(principal.getName(), spec, pageable)));
+  }
 }

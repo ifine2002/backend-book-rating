@@ -12,6 +12,7 @@ import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.exception.CustomException;
 import vn.ifine.exception.ResourceNotFoundException;
+import vn.ifine.model.FavoriteBook;
 import vn.ifine.model.Follow;
 import vn.ifine.model.User;
 import vn.ifine.repository.FollowRepository;
@@ -22,6 +23,7 @@ import vn.ifine.service.UserService;
 @Slf4j(topic = "FOLLOW-SERVICE-IMPL")
 @RequiredArgsConstructor
 public class FollowServiceImpl implements FollowService {
+
 
 
   private final FollowRepository followRepository;
@@ -71,12 +73,7 @@ public class FollowServiceImpl implements FollowService {
   }
 
   private ResUserFollow convertToResUserFollow(User user) {
-    return ResUserFollow.builder()
-        .id(user.getId())
-        .fullName(user.getFullName())
-        .email(user.getEmail())
-        .image(user.getImage())
-        .build();
+    return new ResUserFollow(user.getId(), user.getFullName(), user.getImage());
   }
 
   @Override
@@ -93,6 +90,38 @@ public class FollowServiceImpl implements FollowService {
     // convert data
     List<ResFollowDTO> listUser = pageFollow.getContent()
         .stream().map(this::convertToResFollowDTO)
+        .toList();
+    rs.setResult(listUser);
+    return rs;
+  }
+
+  @Override
+  public ResultPaginationDTO getListFollowing(String email, Specification<Follow> spec,
+      Pageable pageable) {
+
+    User user = userService.getUserByEmail(email);
+
+    // Tạo specification để lọc theo userId
+    Specification<Follow> userSpec = (root, query, cb) -> cb.equal(root.get("follower").get("id"), user.getId());
+
+    // Kết hợp với specification được truyền vào
+    Specification<Follow> combinedSpec = userSpec.and(spec);
+
+    Page<Follow> pageFollow = followRepository.findAll(combinedSpec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+
+    rs.setTotalPages(pageFollow.getTotalPages());
+    rs.setTotalElements(pageFollow.getTotalElements());
+
+    // convert data
+    List<ResUserFollow> listUser = pageFollow.getContent()
+        .stream().map(follow -> {
+          User userFollow = follow.getFollowing();
+          return this.convertToResUserFollow(userFollow);
+        })
         .toList();
     rs.setResult(listUser);
     return rs;

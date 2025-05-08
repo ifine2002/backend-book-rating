@@ -13,9 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
-import vn.ifine.dto.response.ResBookSearch;
 import vn.ifine.dto.response.ResInfoUser;
-import vn.ifine.dto.response.ResInfoUser.UserFollow;
 import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResUserSearch;
@@ -23,17 +21,14 @@ import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
 import vn.ifine.exception.ResourceAlreadyExistsException;
 import vn.ifine.exception.ResourceNotFoundException;
-import vn.ifine.model.Book;
 import vn.ifine.model.Follow;
 import vn.ifine.model.Role;
 import vn.ifine.model.User;
 import vn.ifine.repository.FollowRepository;
 import vn.ifine.repository.UserRepository;
 import vn.ifine.service.FileService;
-import vn.ifine.service.FollowService;
 import vn.ifine.service.RoleService;
 import vn.ifine.service.UserService;
-import vn.ifine.specification.BookSpecification;
 import vn.ifine.specification.UserSpecification;
 import vn.ifine.util.UserStatus;
 
@@ -61,15 +56,15 @@ public class UserServiceImpl implements UserService {
   public ResInfoUser getInfoUser(Long id) {
     User user = this.getById(id);
     List<Follow> followers = followRepository.findByFollowingId(id);
-    List<UserFollow> listFollowers = followers.stream().map(x -> {
+    List<ResUserFollow> listFollowers = followers.stream().map(x -> {
       User follower = x.getFollower();
-      return new UserFollow(follower.getId(), follower.getFullName(), follower.getImage());
+      return new ResUserFollow(follower.getId(), follower.getFullName(), follower.getImage());
     }).toList();
 
     List<Follow> followings = followRepository.findByFollowerId(id);
-    List<UserFollow> listFollowings = followings.stream().map(x -> {
+    List<ResUserFollow> listFollowings = followings.stream().map(x -> {
       User following = x.getFollowing();
-      return new UserFollow(following.getId(), following.getFullName(), following.getImage());
+      return new ResUserFollow(following.getId(), following.getFullName(), following.getImage());
     }).toList();
 
     return ResInfoUser.builder()

@@ -21,16 +21,7 @@ public class ResInfoUser {
 
   private String image;
 
-  private List<UserFollow> follower;
+  private List<ResUserFollow> follower;
 
-  private List<UserFollow> following;
-
-  @Setter
-  @Getter
-  @AllArgsConstructor
-  public static class UserFollow {
-    private Long id;
-    private String fullName;
-    private String image;
-  }
+  private List<ResUserFollow> following;
 }
