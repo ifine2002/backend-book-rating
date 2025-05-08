@@ -44,16 +44,6 @@ public class FollowController {
             this.followService.create(followerId, followingId)));
   }
 
-  @PostMapping("/follow-to/{followingId}")
-  public ResponseEntity<ApiResponse<ResFollowDTO>> followUser(Principal principal,
-      @PathVariable("followingId") @Min(1) Long followingId) {
-    log.info("Request follow user, followingId={}, emailFollower={}", followingId,
-        principal.getName());
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.created("Follow user success",
-            this.followService.followUser(principal.getName(), followingId)));
-  }
-
   // Remove
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable("id") Long id) {
@@ -62,50 +52,20 @@ public class FollowController {
     return ResponseEntity.ok().body(ApiResponse.success("Delete follow success", null));
   }
 
+  @DeleteMapping("/")
+  public ResponseEntity<ApiResponse<Void>> unfollow(@RequestParam @Min(1) Long followerId,
+      @RequestParam @Min(1) Long followingId) {
+    log.info("Request unfollow, followerId={}, followingId={}", followerId, followingId);
+    this.followService.unfollow(followerId, followingId);
+    return ResponseEntity.ok().body(ApiResponse.success("Unfollow success", null));
+  }
+
   @GetMapping("/list")
   public ResponseEntity<ApiResponse<ResultPaginationDTO>> getFollows(
       @Filter Specification<Follow> spec,
       Pageable pageable) {
     return ResponseEntity.ok().body(
         ApiResponse.success("Fetch all follow success",
-            this.followService.getPermissions(spec, pageable)));
-  }
-
-  // Lấy danh sách user đang follow bạn
-  @GetMapping("/list-follower")
-  public ResponseEntity<ApiResponse<?>> getListFollower(
-      Principal principal) {
-    return ResponseEntity.ok().body(
-        ApiResponse.success("Get list follower success",
-            this.followService.getListFollower(principal.getName())));
-  }
-
-  // Lấy danh sách user bạn đang follow
-  @GetMapping("/list-following")
-  public ResponseEntity<ApiResponse<?>> getListFollowing(
-      Principal principal) {
-    return ResponseEntity.ok().body(
-        ApiResponse.success("Get list follower success",
-            this.followService.getListFollowing(principal.getName())));
-  }
-
-  //Hủy follow từ follower (từ bên đi follow)
-  @DeleteMapping("/unfollow-follower")
-  public ResponseEntity<ApiResponse<Void>> unFollowFromFollower(Principal principal,
-      @RequestParam @Min(1) Long followingId) {
-    log.info("Request unfollow from follower, emailFollower={}, followingId={}",
-        principal.getName(), followingId);
-    this.followService.unFollowForFollower(principal.getName(), followingId);
-    return ResponseEntity.ok().body(ApiResponse.success("Unfollow user from follower success", null));
-  }
-
-  //Hủy follow từ following (từ bên được follow)
-  @DeleteMapping("/unfollow-following")
-  public ResponseEntity<ApiResponse<Void>> unFollowFromFollowing(
-      @RequestParam @Min(1) Long followerId, Principal principal) {
-    log.info("Request unfollow from following, emailFollowing={}, followerId={}",
-        principal.getName(), followerId);
-    this.followService.unFollowForFollowing(followerId, principal.getName());
-    return ResponseEntity.ok().body(ApiResponse.success("Unfollow user from following success", null));
+            this.followService.getFollows(spec, pageable)));
   }
 }

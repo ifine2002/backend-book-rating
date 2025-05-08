@@ -67,8 +67,8 @@ public class UserServiceImpl implements UserService {
     }).toList();
 
     List<Follow> followings = followRepository.findByFollowerId(id);
-    List<UserFollow> listFollowings = followers.stream().map(x -> {
-      User following = x.getFollower();
+    List<UserFollow> listFollowings = followings.stream().map(x -> {
+      User following = x.getFollowing();
       return new UserFollow(following.getId(), following.getFullName(), following.getImage());
     }).toList();
 

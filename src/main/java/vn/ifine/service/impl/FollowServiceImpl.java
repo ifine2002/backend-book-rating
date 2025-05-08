@@ -23,6 +23,7 @@ import vn.ifine.service.UserService;
 @RequiredArgsConstructor
 public class FollowServiceImpl implements FollowService {
 
+
   private final FollowRepository followRepository;
   private final UserService userService;
 
@@ -43,23 +44,6 @@ public class FollowServiceImpl implements FollowService {
   }
 
   @Override
-  public ResFollowDTO followUser(String email, Long followingId) {
-    log.info("Request follow user, emailFollower={}, followingId={}", email, followingId);
-    User follower = userService.getUserByEmail(email);
-    if (follower.getId() == followingId) {
-      throw new CustomException("Can't follow myself");
-    }
-    User following = userService.getById(followingId);
-    Follow follow = Follow.builder()
-        .follower(follower)
-        .following(following)
-        .build();
-    follow = followRepository.save(follow);
-
-    return this.convertToResFollowDTO(follow);
-  }
-
-  @Override
   public void delete(Long id) {
     log.info("Request delete follow, id={}", id);
     Follow follow = followRepository.findById(id)
@@ -68,46 +52,15 @@ public class FollowServiceImpl implements FollowService {
   }
 
   @Override
-  public void unFollowForFollower(String email, Long followingId) {
-    log.info("Request unfollow form follower user, emailFollower={}, followingId={}", email, followingId);
-    User follower = userService.getUserByEmail(email);
-    Follow follow = followRepository.findByFollowerIdAndFollowingId(follower.getId(), followingId)
+  public void unfollow(Long followerId, Long followingId) {
+    Follow follow = followRepository.findByFollowerIdAndFollowingId(followerId, followingId)
         .orElseThrow(() -> new ResourceNotFoundException(
-            "Not found follow with followerId=" + follower.getId() + " and followingId="
+            "Not found follow with followerId = " + followerId + " and followingId = "
                 + followingId));
     followRepository.delete(follow);
   }
 
-  @Override
-  public void unFollowForFollowing(Long followerId, String email) {
-    log.info("Request unfollow from following user, followerId={}, emailFollowing={}", followerId, email);
-    User following = userService.getUserByEmail(email);
-    Follow follow = followRepository.findByFollowerIdAndFollowingId(followerId, following.getId())
-        .orElseThrow(() -> new ResourceNotFoundException(
-            "Not found follow with followerId=" + followerId + " and followingId="
-                + following.getId()));
-    followRepository.delete(follow);
-  }
-
-  @Override
-  public List<ResUserFollow> getListFollower(String email) {
-    User user = userService.getUserByEmail(email);
-    List<Follow> listFollows = followRepository.findByFollowingId(user.getId());
-    List<User> follower = listFollows.stream().map(Follow::getFollower).toList();
-    List<ResUserFollow> listRes = follower.stream().map(this::convertToResUserFollow).toList();
-    return listRes;
-  }
-
-  @Override
-  public List<ResUserFollow> getListFollowing(String email) {
-    User user = userService.getUserByEmail(email);
-    List<Follow> listFollows = followRepository.findByFollowerId(user.getId());
-    List<User> following = listFollows.stream().map(Follow::getFollowing).toList();
-    List<ResUserFollow> listRes = following.stream().map(this::convertToResUserFollow).toList();
-    return listRes;
-  }
-
-  private ResFollowDTO convertToResFollowDTO(Follow follow){
+  private ResFollowDTO convertToResFollowDTO(Follow follow) {
     return ResFollowDTO.builder()
         .id(follow.getId())
         .followerId(follow.getFollower().getId())
@@ -117,7 +70,7 @@ public class FollowServiceImpl implements FollowService {
         .build();
   }
 
-  private ResUserFollow convertToResUserFollow(User user){
+  private ResUserFollow convertToResUserFollow(User user) {
     return ResUserFollow.builder()
         .id(user.getId())
         .fullName(user.getFullName())
@@ -127,7 +80,7 @@ public class FollowServiceImpl implements FollowService {
   }
 
   @Override
-  public ResultPaginationDTO getPermissions(Specification<Follow> spec, Pageable pageable) {
+  public ResultPaginationDTO getFollows(Specification<Follow> spec, Pageable pageable) {
     Page<Follow> pageFollow = followRepository.findAll(spec, pageable);
     ResultPaginationDTO rs = new ResultPaginationDTO();
 

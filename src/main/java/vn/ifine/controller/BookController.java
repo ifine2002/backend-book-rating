@@ -95,14 +95,6 @@ public class BookController {
             this.bookService.getHomeBook(spec, pageable)));
   }
 
-  @GetMapping("/detail-post/{id}")
-  public ResponseEntity<ApiResponse<ResPost>> getPostById(@PathVariable @Min(1) long id) {
-    log.info("Request get post, bookId={}", id);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Fetch a post success",
-            bookService.getPostById(id)));
-  }
-
   @GetMapping("/list-book-user")
   public ResponseEntity<ApiResponse<ResultPaginationDTO>> getAllPostOfUser(@RequestParam String email, Pageable pageable) {
     return ResponseEntity.ok().body(

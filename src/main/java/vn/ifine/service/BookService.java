@@ -45,5 +45,5 @@ public interface BookService {
 
   ResultPaginationDTO searchHome(Pageable pageable, String keyword);
 
-  ResPost getPostById(Long bookId);
+  ResBookSearch convertToResBookSearch(Book book);
 }

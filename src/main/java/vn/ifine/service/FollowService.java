@@ -14,17 +14,9 @@ public interface FollowService {
 
   ResFollowDTO create(Long followerId, Long followingId);
 
-  ResFollowDTO followUser(String email, Long followingId);
-
   void delete(Long id);
 
-  void unFollowForFollower(String email, Long followingId);
+  void unfollow(Long followerId, Long followingId);
 
-  void unFollowForFollowing(Long followerId, String email);
-  //List user đang follow bạn
-  List<ResUserFollow> getListFollower(String email);
-  //List user bạn đang follow
-  List<ResUserFollow> getListFollowing(String email);
-
-  ResultPaginationDTO getPermissions(Specification<Follow> spec, Pageable pageable);
+  ResultPaginationDTO getFollows(Specification<Follow> spec, Pageable pageable);
 }

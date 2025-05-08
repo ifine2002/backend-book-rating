@@ -304,12 +304,6 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
-  public ResPost getPostById(Long bookId) {
-    Book book = this.getById(bookId);
-    return this.convertToResPost(book);
-  }
-
-  @Override
   public ResBook convertToResBook(Book book) {
     Set<ResCategoryInBook> resCategories = book.getCategories().stream()
         .map(c -> {
@@ -474,8 +468,8 @@ public class BookServiceImpl implements BookService {
         .updatedAt(book.getUpdatedAt())
         .build();
   }
-
-  private ResBookSearch convertToResBookSearch(Book book){
+  @Override
+  public ResBookSearch convertToResBookSearch(Book book){
     List<Rating> ratings = ratingRepository.findByBookId(book.getId());
 
     double avgRating = ratings.stream()
