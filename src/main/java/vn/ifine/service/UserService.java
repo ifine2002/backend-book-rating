@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import vn.ifine.dto.request.ReqChangePassword;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
@@ -40,9 +41,9 @@ public interface UserService {
 
   ResultPaginationDTO getAllActive(Specification<User> spec, Pageable pageable);
 
-  UserResponse updateAvatar(MultipartFile file, String email);
-
   UserResponse changeInfo(String email, ReqChangeInfo request);
+
+  void changePassword(String email, ReqChangePassword request);
 
   ResultPaginationDTO searchUser(Pageable pageable, String keyword);
 

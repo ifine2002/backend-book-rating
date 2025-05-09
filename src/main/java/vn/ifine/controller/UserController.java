@@ -19,10 +19,11 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
+import vn.ifine.dto.request.ReqChangePassword;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
@@ -50,17 +51,6 @@ public class UserController {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.created("Create a user success",
             this.userService.createUser(reqUser)));
-  }
-
-  @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable @Min(1) long id) {
-    log.info("Request get user, id={}", id);
-    // check exist by id
-    User user = this.userService.getById(id);
-    UserResponse resUser = userService.convertToUserResponse(user);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Fetch a user success",
-            resUser));
   }
 
   @GetMapping("/profile/{id}")
@@ -145,14 +135,15 @@ public class UserController {
             this.userService.getAllActive(spec, pageable)));
   }
 
-  // Update avatar for user
-  @PatchMapping("/updateAvatar")
-  public ResponseEntity<ApiResponse<UserResponse>> updateAvatar(@RequestParam("file") MultipartFile file,
-      Principal principal) {
-    log.info("Request update avatar user, emailUser={}", principal.getName());
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Update role for user success",
-            this.userService.updateAvatar(file, principal.getName())));
+  // Change password
+  @PatchMapping("/change-password")
+  public ResponseEntity<ApiResponse<Void>> changePassword(Principal principal,
+      @RequestBody @Valid ReqChangePassword request) {
+    log.info("Request change user password, {} {}", request.getOldPassword(), request.getNewPassword());
+    userService.changePassword(principal.getName(), request);
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(ApiResponse.success("Change user password success",
+            null));
   }
 
   @GetMapping("/search")
@@ -161,5 +152,16 @@ public class UserController {
     return ResponseEntity.ok()
         .body(ApiResponse.success("Search user success",
             userService.searchUser(pageable, keyword)));
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable @Min(1) long id) {
+    log.info("Request get user, id={}", id);
+    // check exist by id
+    User user = this.userService.getById(id);
+    UserResponse resUser = userService.convertToUserResponse(user);
+    return ResponseEntity.ok()
+        .body(ApiResponse.success("Fetch a user success",
+            resUser));
   }
 }

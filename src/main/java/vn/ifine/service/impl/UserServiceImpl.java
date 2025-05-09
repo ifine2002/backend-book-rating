@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import vn.ifine.dto.request.ReqChangePassword;
 import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
@@ -18,6 +19,7 @@ import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResUserSearch;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
+import vn.ifine.exception.CustomException;
 import vn.ifine.exception.ResourceAlreadyExistsException;
 import vn.ifine.exception.ResourceNotFoundException;
 import vn.ifine.model.Follow;
@@ -154,6 +156,24 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public void changePassword(String email, ReqChangePassword request) {
+    User user = this.getUserByEmail(email);
+
+    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+      throw new CustomException("Old password is incorrect");
+    }
+
+    if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+      throw new CustomException("New password and confirm password do not match");
+    }
+
+    String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+    user.setPassword(encodedNewPassword);
+
+    userRepository.save(user);
+  }
+
+  @Override
   public void remove(long id) {
     User user = this.getById(id);
     this.userRepository.deleteById(id);
@@ -259,20 +279,6 @@ public class UserServiceImpl implements UserService {
 
     rs.setResult(listUser);
     return rs;
-  }
-
-  @Override
-  public UserResponse updateAvatar(MultipartFile file, String email){
-    User user = getUserByEmail(email);
-
-    // Upload lên MinIO
-    String fileUrl = fileService.upload(file);
-
-    // Cập nhật avatar URL trong DB
-    user.setImage(fileUrl);
-    userRepository.save(user);
-
-    return this.convertToUserResponse(user);
   }
 
   private ResUserSearch convertToResUserSearch(User user){
