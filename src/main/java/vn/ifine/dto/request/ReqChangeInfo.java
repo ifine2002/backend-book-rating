@@ -25,6 +25,8 @@ public class ReqChangeInfo implements Serializable {
   )
   private MultipartFile image;
 
+  private boolean deleteImage;
+
   @Pattern(regexp = "^\\d{10}$", message = "phone invalid format")
   private String phone;
 

@@ -38,6 +38,12 @@ public class UserResponse{
 
     private Role role;
 
+    //Số lượng người theo dõi mình
+    private Long follower;
+
+    //Số lượng người mình theo dõi
+    private Long following;
+
     private Date createdAt;
 
     private Date updatedAt;

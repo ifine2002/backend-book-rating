@@ -27,8 +27,6 @@ import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ApiResponse;
-import vn.ifine.dto.response.ResFollowDTO;
-import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
 import vn.ifine.model.User;
@@ -64,17 +62,6 @@ public class UserController {
         .body(ApiResponse.success("Fetch a user success",
             resUser));
   }
-
-  @GetMapping("/detail/{id}")
-  public ResponseEntity<ApiResponse<?>> getUserDetailById(@PathVariable @Min(1) Long id) {
-    log.info("Request get user detail, id={}", id);
-    // check exist by id
-    ResUserDetail resUser = userService.getUserDetail(id);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Get user detail success",
-            resUser));
-  }
-
 
   @GetMapping("/profile/{id}")
   public ResponseEntity<ApiResponse<?>> getProfileUser(@PathVariable @Min(1) Long id) {

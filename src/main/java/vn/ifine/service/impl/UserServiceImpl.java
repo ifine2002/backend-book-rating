@@ -14,7 +14,6 @@ import vn.ifine.dto.request.ReqCreateUser;
 import vn.ifine.dto.request.ReqChangeInfo;
 import vn.ifine.dto.request.ReqUpdateUser;
 import vn.ifine.dto.response.ResInfoUser;
-import vn.ifine.dto.response.ResUserDetail;
 import vn.ifine.dto.response.ResUserFollow;
 import vn.ifine.dto.response.ResUserSearch;
 import vn.ifine.dto.response.ResultPaginationDTO;
@@ -74,34 +73,6 @@ public class UserServiceImpl implements UserService {
         .image(user.getImage())
         .follower(listFollowers)
         .following(listFollowings)
-        .build();
-  }
-
-  // for admin
-  @Override
-  public ResUserDetail getUserDetail(Long userId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found with id = " + userId));
-    Long countFollower = followRepository.countByFollowingId(userId);
-    Long countFollowing = followRepository.countByFollowerId(userId);
-
-    return ResUserDetail.builder()
-        .id(user.getId())
-        .fullName(user.getFullName())
-        .email(user.getEmail())
-        .image(user.getImage())
-        .phone(user.getPhone())
-        .gender(user.getGender())
-        .userDOB(user.getUserDOB())
-        .address(user.getAddress())
-        .status(user.getStatus())
-        .role(user.getRole())
-        .follower(countFollower)
-        .following(countFollowing)
-        .createdAt(user.getCreatedAt())
-        .updatedAt(user.getUpdatedAt())
-        .createBy(user.getCreatedBy())
-        .updatedBy(user.getUpdatedBy())
         .build();
   }
 
@@ -166,7 +137,12 @@ public class UserServiceImpl implements UserService {
   public UserResponse changeInfo(String email, ReqChangeInfo request) {
     User user = this.getUserByEmail(email);
     user.setFullName(request.getFullName());
-    user.setImage(fileService.upload(request.getImage()));
+    if(request.getImage() != null){
+      user.setImage(fileService.upload(request.getImage()));
+    }
+    if(request.isDeleteImage()){
+      user.setImage(null);
+    }
     user.setPhone(request.getPhone());
     user.setGender(request.getGender());
     user.setUserDOB(request.getUserDOB());
@@ -208,6 +184,8 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public UserResponse convertToUserResponse(User user) {
+    Long countFollower = followRepository.countByFollowingId(user.getId());
+    Long countFollowing = followRepository.countByFollowerId(user.getId());
     return UserResponse.builder()
         .id(user.getId())
         .fullName(user.getFullName())
@@ -219,6 +197,8 @@ public class UserServiceImpl implements UserService {
         .address(user.getAddress())
         .status(user.getStatus())
         .role(user.getRole())
+        .follower(countFollower)
+        .following(countFollowing)
         .createdAt(user.getCreatedAt())
         .updatedAt(user.getUpdatedAt())
         .createBy(user.getCreatedBy())

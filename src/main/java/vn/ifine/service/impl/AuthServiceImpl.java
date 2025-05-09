@@ -69,6 +69,7 @@ public class AuthServiceImpl implements AuthService {
           userDB.getId(),
           userDB.getEmail(),
           userDB.getFullName(),
+          userDB.getImage(),
           userDB.getRole());
       res.setUser(userLogin);
     }
@@ -99,6 +100,7 @@ public class AuthServiceImpl implements AuthService {
           currentUserDB.getId(),
           currentUserDB.getEmail(),
           currentUserDB.getFullName(),
+          currentUserDB.getImage(),
           currentUserDB.getRole());
       res.setUser(userLogin);
     }
