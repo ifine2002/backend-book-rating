@@ -1,6 +1,7 @@
 package vn.ifine.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import vn.ifine.dto.response.ResLoginDTO.UserInsideToken;
 import vn.ifine.dto.response.ResLoginDTO.UserLogin;
 import vn.ifine.dto.response.ResUserAccount;
 import vn.ifine.exception.CustomAuthenticationException;
+import vn.ifine.exception.CustomException;
 import vn.ifine.exception.InvalidTokenException;
 import vn.ifine.model.User;
 import vn.ifine.model.VerificationToken;
@@ -116,12 +118,19 @@ public class AuthServiceImpl implements AuthService {
     boolean existUser = userService.isEmailExist(registerDTO.getEmail());
     if (existUser) {
       User user = userService.getUserByEmail(registerDTO.getEmail());
+      user.setFullName(registerDTO.getFullName());
+      user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
+      userRepository.save(user);
       if (user.getStatus() != UserStatus.NONE) {
         throw new CustomAuthenticationException("This email has already been used",
             HttpStatus.BAD_REQUEST);
       }
-      createAndSendToken(user);
+      this.createAndSendToken(user);
       return;
+    }
+
+    if (!registerDTO.getPassword().equals(registerDTO.getConfirmPassword())){
+      throw new CustomException("Password and confirm password do not match");
     }
 
     User user = User.builder()
@@ -133,13 +142,14 @@ public class AuthServiceImpl implements AuthService {
     userRepository.save(user);
     log.info("Save register user on database success, id={}", user.getId());
     // todo gửi mã
-    createAndSendToken(user);
+    this.createAndSendToken(user);
   }
 
-  private void createAndSendToken(User user) {
+  @Override
+  public void createAndSendToken(User user) {
     tokenRepository.findByUser(user).ifPresent(tokenRepository::delete);
 
-    String token = UUID.randomUUID().toString();
+    String token = String.format("%06d", new Random().nextInt(1_000_000));
     VerificationToken verificationToken = new VerificationToken();
     verificationToken.setToken(token);
     verificationToken.setUser(user);
@@ -150,8 +160,10 @@ public class AuthServiceImpl implements AuthService {
         user.getFullName(), token, null);
   }
 
-  public void verifyToken(String token) {
-    VerificationToken vt = tokenRepository.findByToken(token)
+  public void verifyToken(String email, String token) {
+    User user = userService.getUserByEmail(email);
+
+    VerificationToken vt = tokenRepository.findByTokenAndUser(token, user)
         .orElseThrow(
             () -> new CustomAuthenticationException("Token invalid", HttpStatus.BAD_REQUEST));
 
@@ -159,9 +171,9 @@ public class AuthServiceImpl implements AuthService {
       throw new CustomAuthenticationException("Token has expired", HttpStatus.BAD_REQUEST);
     }
 
-    User user = vt.getUser();
-    user.setStatus(UserStatus.ACTIVE);
-    userRepository.save(user);
+    User userDB = vt.getUser();
+    userDB.setStatus(UserStatus.ACTIVE);
+    userRepository.save(userDB);
     tokenRepository.delete(vt);
   }
 

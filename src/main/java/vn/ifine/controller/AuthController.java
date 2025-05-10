@@ -23,6 +23,7 @@ import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResLoginDTO;
 import vn.ifine.dto.response.ResUserAccount;
 import vn.ifine.exception.InvalidTokenException;
+import vn.ifine.model.User;
 import vn.ifine.service.AuthService;
 import vn.ifine.service.JwtService;
 import vn.ifine.service.UserService;
@@ -108,9 +109,16 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.created("Already registered, please check your email to verify.", null));
   }
 
+  @GetMapping("/resend-token")
+  public ResponseEntity<ApiResponse<Void>> resendToken(@RequestParam String email) {
+    User user = userService.getUserByEmail(email);
+    authService.createAndSendToken(user);
+    return ResponseEntity.ok(ApiResponse.success("Resend verify token successful!", null));
+  }
+
   @GetMapping("/verify")
-  public ResponseEntity<ApiResponse<Void>> verify(@RequestParam String token) {
-    authService.verifyToken(token);
+  public ResponseEntity<ApiResponse<Void>> verify(@RequestParam String email, @RequestParam String token) {
+    authService.verifyToken(email, token);
     return ResponseEntity.ok(ApiResponse.success("Account Verification Successful!", null));
   }
 

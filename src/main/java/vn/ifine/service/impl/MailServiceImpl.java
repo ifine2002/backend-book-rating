@@ -63,9 +63,8 @@ public class MailServiceImpl implements MailService {
   public void sendEmailFromTemplateSync(String recipients, String subject, String templateName, String fullName,
       String token, MultipartFile[] files) {
     Context context = new Context();
-    String link = "http://localhost:8080/auth/verify?token=" + token;
     context.setVariable("fullName", fullName);
-    context.setVariable("link", link);
+    context.setVariable("token", token);
 
     String content = this.templateEngine.process(templateName, context);
     this.sendEmailSync(recipients, subject, content, null, true);
