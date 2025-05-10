@@ -95,6 +95,15 @@ public class BookController {
             this.bookService.getHomeBook(spec, pageable)));
   }
 
+  @GetMapping("/explore")
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getExplore(
+      @Filter Specification<Book> spec,
+      Pageable pageable) {
+    return ResponseEntity.ok().body(
+        ApiResponse.success("Fetch explore book success",
+            this.bookService.getExplore(spec, pageable)));
+  }
+
   @GetMapping("/list-book-user")
   public ResponseEntity<ApiResponse<ResultPaginationDTO>> getAllPostOfUser(@RequestParam String email, Pageable pageable) {
     return ResponseEntity.ok().body(

@@ -284,6 +284,27 @@ public class BookServiceImpl implements BookService {
   }
 
   @Override
+  public ResultPaginationDTO getExplore(Specification<Book> spec, Pageable pageable) {
+    // Kết hợp điều kiện isActive với các điều kiện khác
+    Specification<Book> activeSpec = BookSpecification.activeWithFilter(spec);
+
+    Page<Book> pageBook = bookRepository.findAll(activeSpec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+    rs.setTotalPages(pageBook.getTotalPages());
+    rs.setTotalElements(pageBook.getTotalElements());
+    // convert data
+    List<ResBookSearch> listBook = pageBook.getContent()
+        .stream().map(this::convertToResBookSearch)
+        .toList();
+
+    rs.setResult(listBook);
+    return rs;
+  }
+
+  @Override
   public ResultPaginationDTO getAllPostOfUser(String email, Pageable pageable) {
     Specification<Book> spec = BookSpecification.activeByCreator(email);
 

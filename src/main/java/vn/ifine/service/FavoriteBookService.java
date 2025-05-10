@@ -17,7 +17,7 @@ public interface FavoriteBookService {
 
   void deleteFavoriteBook(Long favoriteId, String email);
 
-  ResultPaginationDTO getUserFavorite(Long userId, Specification<FavoriteBook> spec, Pageable pageable);
+  ResultPaginationDTO getBookFavoriteOfUser(Long userId, Specification<FavoriteBook> spec, Pageable pageable);
 
   ResultPaginationDTO getListFavoriteOfUser(String email, Specification<FavoriteBook> spec, Pageable pageable);
 }

@@ -48,7 +48,7 @@ public class FavoriteBookController {
       Pageable pageable) {
     return ResponseEntity.status(HttpStatus.OK)
         .body(ApiResponse.success("Fetch favorites book of user success",
-            this.favoriteBookService.getUserFavorite(userId, spec, pageable)));
+            this.favoriteBookService.getBookFavoriteOfUser(userId, spec, pageable)));
   }
 
   @DeleteMapping("/")

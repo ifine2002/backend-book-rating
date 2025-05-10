@@ -37,6 +37,8 @@ public interface BookService {
 
   ResultPaginationDTO getHomeBook(Specification<Book> spec, Pageable pageable);
 
+  ResultPaginationDTO getExplore(Specification<Book> spec, Pageable pageable);
+
   ResultPaginationDTO getAllPostOfUser(String email, Pageable pageable);
 
   ResBook convertToResBook(Book book);

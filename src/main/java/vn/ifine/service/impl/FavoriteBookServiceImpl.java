@@ -60,7 +60,7 @@ public class FavoriteBookServiceImpl implements FavoriteBookService {
   }
 
   @Override
-  public ResultPaginationDTO getUserFavorite(Long userId, Specification<FavoriteBook> spec,
+  public ResultPaginationDTO getBookFavoriteOfUser(Long userId, Specification<FavoriteBook> spec,
       Pageable pageable) {
     User user = userService.getById(userId);
 
