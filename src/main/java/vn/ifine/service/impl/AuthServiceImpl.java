@@ -22,8 +22,10 @@ import vn.ifine.dto.response.ResUserAccount;
 import vn.ifine.exception.CustomAuthenticationException;
 import vn.ifine.exception.CustomException;
 import vn.ifine.exception.InvalidTokenException;
+import vn.ifine.model.Role;
 import vn.ifine.model.User;
 import vn.ifine.model.VerificationToken;
+import vn.ifine.repository.RoleRepository;
 import vn.ifine.repository.UserRepository;
 import vn.ifine.repository.VerificationTokenRepository;
 import vn.ifine.service.AuthService;
@@ -44,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
   private final UserRepository userRepository;
   private final VerificationTokenRepository tokenRepository;
   private final MailService mailService;
+  private final RoleRepository roleRepository;
 
   @Override
   public ResLoginDTO login(ReqLoginDTO loginDTO) {
@@ -133,10 +136,13 @@ public class AuthServiceImpl implements AuthService {
       throw new CustomException("Password and confirm password do not match");
     }
 
+    Role roleUser = roleRepository.findByName("USER");
+
     User user = User.builder()
         .email(registerDTO.getEmail())
         .password(passwordEncoder.encode(registerDTO.getPassword()))
         .fullName(registerDTO.getFullName())
+        .role(roleUser)
         .status(UserStatus.NONE)
         .build();
     userRepository.save(user);

@@ -138,16 +138,16 @@ public class BookController {
             detailBook));
   }
 
-  @PatchMapping("/approve/{bookId}")
-  public ResponseEntity<ApiResponse<Void>> approveBook(@PathVariable("bookId") @Min(1) Long bookId){
+  @PatchMapping("/approve/{id}")
+  public ResponseEntity<ApiResponse<Void>> approveBook(@PathVariable("id") @Min(1) Long bookId){
     bookService.approveBook(bookId);
     return ResponseEntity.ok()
         .body(ApiResponse.success("Approve a book success",
             null));
   }
 
-  @PatchMapping("/reject/{bookId}")
-  public ResponseEntity<ApiResponse<Void>> rejectBook(@PathVariable("bookId") @Min(1) Long bookId){
+  @PatchMapping("/reject/{id}")
+  public ResponseEntity<ApiResponse<Void>> rejectBook(@PathVariable("id") @Min(1) Long bookId){
     bookService.rejectBook(bookId);
     return ResponseEntity.ok()
         .body(ApiResponse.success("Reject a book success",

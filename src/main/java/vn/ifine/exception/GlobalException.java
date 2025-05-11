@@ -189,5 +189,21 @@ public class GlobalException {
     return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorResponse);
   }
 
+  @ExceptionHandler(value = {PermissionException.class})
+  @ResponseStatus(FORBIDDEN)
+  public ResponseEntity<ErrorResponse<Object>> handlePermissionException(
+      Exception ex, WebRequest request) {
+    log.error("Exception caught: ", ex);  // Log toàn bộ stack trace
+    ErrorResponse<Object> errorResponse = ErrorResponse.builder()
+        .timestamp(new Date())
+        .status(FORBIDDEN.value())
+        .error(FORBIDDEN.getReasonPhrase())
+        .message(ex.getMessage())
+        .path(request.getDescription(false).replace("uri=", ""))
+        .build();
+
+    return ResponseEntity.status(FORBIDDEN).body(errorResponse);
+  }
+
 
 }

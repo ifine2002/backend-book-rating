@@ -83,18 +83,6 @@ public class PermissionController {
     return ResponseEntity.ok().body(ApiResponse.success("Remove a permission success", null));
   }
 
-  // Delete soft
-  @PatchMapping("/{id}")
-  public ResponseEntity<ApiResponse<Permission>> deleteSoft(@PathVariable @Min(1) long id) {
-    log.info("Request delete-soft permission, permissionId={}", id);
-    // check exist by id
-    Permission existingPermission = this.permissionService.getById(id);
-
-    this.permissionService.deleteSoft(id);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Delete-soft a permission success", null));
-  }
-
   @GetMapping("/list")
   public ResponseEntity<ApiResponse<ResultPaginationDTO>> getPermissions(
       @Filter Specification<Permission> spec,
@@ -113,26 +101,5 @@ public class PermissionController {
     return ResponseEntity.ok()
         .body(ApiResponse.success("Fetch a permission success",
             existingPermission));
-  }
-
-  // Change isActive
-  @PatchMapping("/change-active/{id}")
-  public ResponseEntity<ApiResponse<Permission>> changeIsActive(@PathVariable @Min(1) long id) {
-    log.info("Request change isActive permission, permissionId={}", id);
-    // check exist by id
-    Permission existingPermission = this.permissionService.getById(id);
-
-    this.permissionService.changeIsActive(id);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Change is active a permission success", null));
-  }
-
-  @GetMapping("/active")
-  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getActivePermissions(
-      @Filter Specification<Permission> spec,
-      Pageable pageable) {
-    return ResponseEntity.ok().body(
-        ApiResponse.success("Fetch all active permission success",
-            this.permissionService.getActivePermissions(spec, pageable)));
   }
 }

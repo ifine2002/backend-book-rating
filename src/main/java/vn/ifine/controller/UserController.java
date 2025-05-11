@@ -93,30 +93,6 @@ public class UserController {
     return ResponseEntity.ok().body(ApiResponse.success("Remove a user success", null));
   }
 
-  // Delete soft
-  @PatchMapping("/{id}")
-  public ResponseEntity<ApiResponse<Void>> deleteSoft(@PathVariable @Min(1) long id) {
-    log.info("Request delete-soft user, id={}", id);
-    // check exist by id
-    User user = this.userService.getById(id);
-
-    this.userService.changeStatus(id, UserStatus.DELETED);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("Delete-soft a user success", null));
-  }
-
-  // Change status: ACTIVE
-  @PatchMapping("/changeIsActive/{id}")
-  public ResponseEntity<ApiResponse<Void>> changeIsActive(@PathVariable @Min(1) long id) {
-    log.info("Request change isActive user, id={}", id);
-    // check exist by id
-    User user = this.userService.getById(id);
-
-    this.userService.changeStatus(id, UserStatus.ACTIVE);
-    return ResponseEntity.ok()
-        .body(ApiResponse.success("User is active success", null));
-  }
-
   @GetMapping("/list")
   public ResponseEntity<ApiResponse<ResultPaginationDTO>> getAllUser(
       @Filter Specification<User> spec,
@@ -124,15 +100,6 @@ public class UserController {
     return ResponseEntity.ok().body(
         ApiResponse.success("Fetch all user success",
             this.userService.getAll(spec, pageable)));
-  }
-
-  @GetMapping("/active")
-  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getActiveUser(
-      @Filter Specification<User> spec,
-      Pageable pageable) {
-    return ResponseEntity.ok().body(
-        ApiResponse.success("Fetch all user active success",
-            this.userService.getAllActive(spec, pageable)));
   }
 
   // Change password

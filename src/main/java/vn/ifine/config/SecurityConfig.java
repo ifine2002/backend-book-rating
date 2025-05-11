@@ -42,8 +42,8 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http,
       CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
-    String[] whiteList = { "/", "/auth/**", "/storage/**", "/v3/api-docs/**",
-        "/swagger-ui/**", "/static/**", "/ws/**", "/*.html",
+    String[] whiteList = { "/auth/**", "/v3/api-docs/**",
+        "/swagger-ui/**", "/ws/**", "/*.html",
         "/swagger-ui.html" };
     http
         .csrf(c -> c.disable())

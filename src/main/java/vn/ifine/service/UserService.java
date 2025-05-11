@@ -25,8 +25,6 @@ public interface UserService {
 
   void remove(long id);
 
-  void changeStatus(long id, UserStatus status);
-
   User getUserByEmail(String email);
 
   boolean isEmailExist(String email);
@@ -39,7 +37,6 @@ public interface UserService {
 
   ResultPaginationDTO getAll(Specification<User> spec, Pageable pageable);
 
-  ResultPaginationDTO getAllActive(Specification<User> spec, Pageable pageable);
 
   UserResponse changeInfo(String email, ReqChangeInfo request);
 

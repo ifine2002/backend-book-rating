@@ -73,15 +73,6 @@ public class RoleServiceImpl implements RoleService {
   }
 
   @Override
-  public void deleteSoft(int id) {
-    Role role = this.getById(id);
-    role.setIsActive(false);
-    // update
-    role = roleRepository.save(role);
-    log.info("Role has delete-soft successfully, roleId={}", role.getId());
-  }
-
-  @Override
   public void remove(int id) {
     // delete role inside user
     Role role = this.getById(id);
@@ -91,36 +82,8 @@ public class RoleServiceImpl implements RoleService {
   }
 
   @Override
-  public void changeIsActive(int id) {
-    Role role = this.getById(id);
-    role.setIsActive(true);
-
-    // update
-    role = roleRepository.save(role);
-    log.info("Role has change isActive successfully, roleId={}",
-        role.getId());
-  }
-
-  @Override
   public ResultPaginationDTO getRoles(Specification<Role> spec, Pageable pageable) {
     Page<Role> pageRole = roleRepository.findAll(spec, pageable);
-    ResultPaginationDTO rs = new ResultPaginationDTO();
-
-    rs.setPage(pageable.getPageNumber() + 1);
-    rs.setPageSize(pageable.getPageSize());
-    rs.setTotalPages(pageRole.getTotalPages());
-    rs.setTotalElements(pageRole.getTotalElements());
-    rs.setResult(pageRole.getContent());
-
-    return rs;
-  }
-
-  @Override
-  public ResultPaginationDTO getActiveRoles(Specification<Role> spec, Pageable pageable) {
-    // Kết hợp điều kiện isActive với các điều kiện khác
-    Specification<Role> activeSpec = GenericSpecification.withFilter(spec);
-
-    Page<Role> pageRole= roleRepository.findAll(activeSpec, pageable);
     ResultPaginationDTO rs = new ResultPaginationDTO();
 
     rs.setPage(pageable.getPageNumber() + 1);

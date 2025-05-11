@@ -70,16 +70,6 @@ public class PermissionServiceImpl implements PermissionService {
   }
 
   @Override
-  public void deleteSoft(long id) {
-    Permission permissionDB = this.getById(id);
-    permissionDB.setIsActive(false);
-
-    // update
-    permissionDB = permissionRepository.save(permissionDB);
-    log.info("Permission has delete-soft successfully, permissionId={}", permissionDB.getId());
-  }
-
-  @Override
   public void remove(long id) {
     // delete permission_role
     Permission p = this.getById(id);
@@ -112,76 +102,5 @@ public class PermissionServiceImpl implements PermissionService {
       return true;
     }
     return false;
-  }
-
-  @Override
-  public void changeIsActive(long id) {
-    Permission permissionDB = this.getById(id);
-    permissionDB.setIsActive(true);
-
-    // update
-    permissionDB = permissionRepository.save(permissionDB);
-    log.info("Permission has change isActive successfully, permissionId={}",
-        permissionDB.getId());
-  }
-
-  @Override
-  public ResultPaginationDTO getActivePermissions(Specification<Permission> spec,
-      Pageable pageable) {
-    // Kết hợp điều kiện isActive với các điều kiện khác
-    Specification<Permission> activeSpec = GenericSpecification.withFilter(spec);
-
-    Page<Permission> pagePermission = permissionRepository.findAll(activeSpec, pageable);
-    ResultPaginationDTO rs = new ResultPaginationDTO();
-
-    rs.setPage(pageable.getPageNumber() + 1);
-    rs.setPageSize(pageable.getPageSize());
-    rs.setTotalPages(pagePermission.getTotalPages());
-    rs.setTotalElements(pagePermission.getTotalElements());
-    rs.setResult(pagePermission.getContent());
-
-    return rs;
-  }
-
-  /**
-   * manual synchronization logic
-   *
-   * @param requestedRoles
-   * @param permission
-   * @return
-   */
-  private List<Role> resolveRolesFromRequest(List<Role> requestedRoles, Permission permission) {
-    if (requestedRoles == null || requestedRoles.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    List<Integer> requestRoleIds = requestedRoles.stream()
-        .map(Role::getId)
-        .toList();
-
-    Set<Integer> roleIds = new HashSet<>(requestRoleIds);
-
-    List<Role> dbRoles = roleRepository.findByIdIn(requestRoleIds);
-
-    if (dbRoles.size() != roleIds.size()) {
-      Set<Integer> existingRoleIds = dbRoles.stream()
-          .map(Role::getId)
-          .collect(Collectors.toSet());
-
-      List<Integer> nonExistentRoleIds = roleIds.stream()
-          .filter(id -> !existingRoleIds.contains(id))
-          .toList();
-
-      throw new ResourceNotFoundException("Following roles do not exist: " + nonExistentRoleIds);
-    }
-
-    // Đồng bộ 2 chiều
-    for (Role role : dbRoles) {
-      if (!role.getPermissions().contains(permission)) {
-        role.getPermissions().add(permission);
-      }
-    }
-
-    return dbRoles;
   }
 }

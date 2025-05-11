@@ -9,15 +9,6 @@ import vn.ifine.util.BookStatus;
 import vn.ifine.util.UserStatus;
 
 public class UserSpecification {
-  public static Specification<User> isActive() {
-    return (root, query, criteriaBuilder) ->
-        criteriaBuilder.equal(root.get("status"), UserStatus.ACTIVE);
-  }
-
-  // Kết hợp nhiều điều kiện
-  public static Specification<User> withFilter(Specification<User> spec) {
-    return Specification.where(isActive()).and(spec);
-  }
 
   public static Specification<User> search(String keyword) {
     return (root, query, criteriaBuilder) -> {

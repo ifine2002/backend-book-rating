@@ -18,15 +18,10 @@ public interface PermissionService {
 
   Permission update(long permissionId, ReqPermissionDTO permission);
 
-  void deleteSoft(long id);
-
   void remove(long id);
 
   ResultPaginationDTO getPermissions(Specification<Permission> spec, Pageable pageable);
 
   boolean isSameName(long permissionId, ReqPermissionDTO p);
 
-  void changeIsActive(long id);
-
-  ResultPaginationDTO getActivePermissions(Specification<Permission> spec, Pageable pageable);
 }

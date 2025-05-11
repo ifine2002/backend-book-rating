@@ -181,15 +181,6 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public void changeStatus(long id, UserStatus status) {
-    User user = this.getById(id);
-    user.setStatus(status);
-    // save
-    user = userRepository.save(user);
-    log.info("User has been changed status successfully, id={}", user.getId());
-  }
-
-  @Override
   public User getUserByEmail(String email) {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new ResourceNotFoundException("Bad credentials"));
@@ -257,27 +248,6 @@ public class UserServiceImpl implements UserService {
 
     rs.setResult(listUser);
 
-    return rs;
-  }
-
-  @Override
-  public ResultPaginationDTO getAllActive(Specification<User> spec, Pageable pageable) {
-    // Kết hợp điều kiện isActive với các điều kiện khác
-    Specification<User> activeSpec = UserSpecification.withFilter(spec);
-
-    Page<User> pageUser = userRepository.findAll(activeSpec, pageable);
-    ResultPaginationDTO rs = new ResultPaginationDTO();
-
-    rs.setPage(pageable.getPageNumber() + 1);
-    rs.setPageSize(pageable.getPageSize());
-    rs.setTotalPages(pageUser.getTotalPages());
-    rs.setTotalElements(pageUser.getTotalElements());
-    // convert data
-    List<UserResponse> listUser = pageUser.getContent()
-        .stream().map(this::convertToUserResponse)
-        .toList();
-
-    rs.setResult(listUser);
     return rs;
   }
 

@@ -17,13 +17,7 @@ public interface RoleService {
 
   Role update(int id, ReqRoleDTO role);
 
-  void deleteSoft(int id);
-
   void remove(int id);
 
-  void changeIsActive(int id);
-
   ResultPaginationDTO getRoles(Specification<Role> spec, Pageable pageable);
-
-  ResultPaginationDTO getActiveRoles(Specification<Role> spec, Pageable pageable);
 }
