@@ -34,6 +34,9 @@ public class SecurityConfig {
   @Value("${jwt.refresh-token}")
   private String jwtKeyRefresh;
 
+  @Value("${jwt.reset-token}")
+  private String jwtKeyReset;
+
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
@@ -100,6 +103,11 @@ public class SecurityConfig {
     return new NimbusJwtEncoder(new ImmutableSecret<>(geKey(TokenType.REFRESH)));
   }
 
+  @Bean("resetTokenEncoder")
+  public JwtEncoder resetTokenEncoder() {
+    return new NimbusJwtEncoder(new ImmutableSecret<>(geKey(TokenType.RESET)));
+  }
+
   private SecretKey geKey(TokenType type) {
     switch (type) {
       case ACCESS -> {
@@ -108,6 +116,10 @@ public class SecurityConfig {
       }
       case REFRESH -> {
         byte[] keyBytes = Base64.from(jwtKeyRefresh).decode();
+        return new SecretKeySpec(keyBytes, 0, keyBytes.length, MacAlgorithm.HS512.getName());
+      }
+      case RESET -> {
+        byte[] keyBytes = Base64.from(jwtKeyReset).decode();
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, MacAlgorithm.HS512.getName());
       }
       default -> throw new InvalidTokenException("Invalid token type");

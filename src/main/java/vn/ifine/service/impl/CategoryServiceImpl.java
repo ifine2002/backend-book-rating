@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.ifine.dto.request.ReqCategoryDTO;
 import vn.ifine.dto.response.ResCategory;
+import vn.ifine.dto.response.ResCategoryUpload;
 import vn.ifine.dto.response.ResultPaginationDTO;
 import vn.ifine.dto.response.UserResponse;
 import vn.ifine.exception.ResourceNotFoundException;
@@ -23,6 +24,8 @@ import vn.ifine.service.FileService;
 @RequiredArgsConstructor
 @Slf4j(topic = "CATEGORY-SERVICE-IMPL")
 public class CategoryServiceImpl implements CategoryService {
+
+
 
   @Override
   public boolean isNameExist(String name) {
@@ -88,6 +91,24 @@ public class CategoryServiceImpl implements CategoryService {
   // convert data
     List<ResCategory> listCategory = pageCategory.getContent()
         .stream().map(this::convertToResCategory)
+        .toList();
+    rs.setResult(listCategory);
+    return rs;
+  }
+
+  @Override
+  public ResultPaginationDTO getCategoriesUpload(Specification<Category> spec, Pageable pageable) {
+    Page<Category> pageCategory = categoryRepository.findAll(spec, pageable);
+    ResultPaginationDTO rs = new ResultPaginationDTO();
+
+    rs.setPage(pageable.getPageNumber() + 1);
+    rs.setPageSize(pageable.getPageSize());
+
+    rs.setTotalPages(pageCategory.getTotalPages());
+    rs.setTotalElements(pageCategory.getTotalElements());
+    // convert data
+    List<ResCategoryUpload> listCategory = pageCategory.getContent()
+        .stream().map(c -> new ResCategoryUpload(c.getId(), c.getName()))
         .toList();
     rs.setResult(listCategory);
     return rs;

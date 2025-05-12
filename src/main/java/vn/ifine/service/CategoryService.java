@@ -24,4 +24,6 @@ public interface CategoryService {
   boolean isNameExist(String name);
 
   ResCategory convertToResCategory(Category category);
+
+  ResultPaginationDTO getCategoriesUpload(Specification<Category> spec, Pageable pageable);
 }

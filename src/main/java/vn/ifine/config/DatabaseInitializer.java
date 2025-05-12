@@ -51,6 +51,7 @@ public class DatabaseInitializer implements CommandLineRunner {
       arr.add(new Permission("Delete a category", "/category/{id}", "DELETE", "CATEGORIES"));
       arr.add(new Permission("Create a category", "/category/", "POST", "CATEGORIES"));
       arr.add(new Permission("Get categories with pagination", "/category/list", "GET", "CATEGORIES"));
+      arr.add(new Permission("Get categories upload with pagination", "/category/list-upload", "GET", "CATEGORIES"));
 
       arr.add(new Permission("Create a follow", "/follow/", "POST", "FOLLOWS"));
       arr.add(new Permission("Unfollow", "/follow/", "DELETE", "FOLLOWS"));
@@ -130,7 +131,7 @@ public class DatabaseInitializer implements CommandLineRunner {
       userPermissions.add(permissionRepository.findByApiPathAndMethod("/book/list-book-user", "GET").get());
       userPermissions.add(permissionRepository.findByApiPathAndMethod("/book/home-page", "GET").get());
       userPermissions.add(permissionRepository.findByApiPathAndMethod("/book/explore", "GET").get());
-      userPermissions.add(permissionRepository.findByApiPathAndMethod("/category/list", "GET").get());
+      userPermissions.add(permissionRepository.findByApiPathAndMethod("/category/list-upload", "GET").get());
       userPermissions.addAll(permissionRepository.findByModule("FAVORITES"));
       userPermissions.addAll(permissionRepository.findByModule("REVIEWS"));
 

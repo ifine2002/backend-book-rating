@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import vn.ifine.dto.request.ReqLoginDTO;
 import vn.ifine.dto.request.ReqRegisterDTO;
+import vn.ifine.dto.request.ReqResetPassword;
 import vn.ifine.dto.response.ResLoginDTO;
 import vn.ifine.dto.response.ResLoginDTO.UserInsideToken;
 import vn.ifine.dto.response.ResLoginDTO.UserLogin;
@@ -38,6 +39,8 @@ import vn.ifine.util.UserStatus;
 @Slf4j(topic = "AUTH-SERVICE-IMPL")
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+
 
   private final UserService userService;
   private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -200,5 +203,30 @@ public class AuthServiceImpl implements AuthService {
     }
     log.info("Get info account success email={}", userAccount.getEmail());
     return userAccount;
+  }
+
+  @Override
+  public void sendTokenResetPassword(String email) {
+    User user = userService.getUserByEmail(email);
+    String resetToken = jwtService.createResetToken(email);
+    mailService.sendResetTokenFromTemplateSync(user.getEmail(), "Reset password", "reset-password",
+        user.getFullName(), resetToken, null);
+  }
+
+  @Override
+  public void resetPassword(String token, ReqResetPassword request) {
+    // 1. Kiểm tra resetToken token có hợp lệ
+    Jwt decodedToken = jwtService.checkValidResetToken(token);
+    String email = decodedToken.getSubject();
+    User user = userService.getUserByEmail(email);
+
+    if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+      throw new CustomException("New password and confirm password do not match");
+    }
+
+    String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+    user.setPassword(encodedNewPassword);
+
+    userRepository.save(user);
   }
 }

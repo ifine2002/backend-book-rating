@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import vn.ifine.dto.request.ReqLoginDTO;
 import vn.ifine.dto.request.ReqRegisterDTO;
+import vn.ifine.dto.request.ReqResetPassword;
 import vn.ifine.dto.response.ApiResponse;
 import vn.ifine.dto.response.ResLoginDTO;
 import vn.ifine.dto.response.ResUserAccount;
@@ -113,6 +114,12 @@ public class AuthController {
   public ResponseEntity<ApiResponse<Void>> resendToken(@RequestParam String email) {
     User user = userService.getUserByEmail(email);
     authService.createAndSendToken(user);
+    return ResponseEntity.ok(ApiResponse.success("Send token reset password successful!", null));
+  }
+
+  @GetMapping("/send-reset-token")
+  public ResponseEntity<ApiResponse<Void>> sendResetToken(@RequestParam String email) {
+    authService.sendTokenResetPassword(email);
     return ResponseEntity.ok(ApiResponse.success("Resend verify token successful!", null));
   }
 
@@ -120,6 +127,12 @@ public class AuthController {
   public ResponseEntity<ApiResponse<Void>> verify(@RequestParam String email, @RequestParam String token) {
     authService.verifyToken(email, token);
     return ResponseEntity.ok(ApiResponse.success("Account Verification Successful!", null));
+  }
+
+  @PostMapping("/reset-password")
+  public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestParam String token, @RequestBody ReqResetPassword request) {
+    authService.resetPassword(token, request);
+    return ResponseEntity.ok(ApiResponse.success("Reset password successful!", null));
   }
 
   @GetMapping("/account")

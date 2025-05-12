@@ -59,6 +59,13 @@ public class CategoryController {
         this.categoryService.getCategories(spec, pageable)));
   }
 
+  @GetMapping("/list-upload")
+  public ResponseEntity<ApiResponse<ResultPaginationDTO>> getCategoriesUpload(@Filter Specification<Category> spec,
+      Pageable pageable) {
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("Fetch all category successfully",
+        this.categoryService.getCategoriesUpload(spec, pageable)));
+  }
+
   @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse<ResCategory>> update(@PathVariable @Min(1) int id, @Valid ReqCategoryDTO reqCategoryDTO) {
     return ResponseEntity.ok().body(ApiResponse.success("Update a category successfully", this.categoryService.update(id, reqCategoryDTO)));
